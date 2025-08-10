@@ -1,10 +1,11 @@
-import { Component, Input, OnDestroy, inject, signal } from '@angular/core';
+import { Component, Input, OnDestroy, effect, inject, signal } from '@angular/core';
 import { CommonModule, DecimalPipe, PercentPipe, KeyValuePipe, DatePipe } from '@angular/common';
 import { MatCardModule } from '@angular/material/card';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 import { MatTableModule } from '@angular/material/table';
+import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { CampaignsApiService } from '../../core/services/campaigns.api';
 import { ReportsApiService } from '../../core/services/reports.api';
 import { Campaign, CampaignReport } from '../../core/models/models';
@@ -24,6 +25,7 @@ import { TranslateModule } from '@ngx-translate/core';
     MatIconModule,
     MatSnackBarModule,
     MatTableModule,
+    MatProgressBarModule,
     TranslateModule,
   ],
   styleUrls: ['./campaign-monitor.component.scss'],
@@ -41,25 +43,23 @@ export class CampaignMonitorComponent implements OnDestroy {
   loading = signal<boolean>(false);
   lastRefresh = signal<Date | null>(null);
 
-  private intervalId: any;
-
   logColumns = ['time', 'change', 'reason'];
   aiLogDemo = [
     { time: new Date().toLocaleString(), change: 'Zwiększono budżet Push o 10%', reason: 'Wzrost CTR o 12% w ostatnich 2h' },
     { time: new Date(Date.now() - 3600_000).toLocaleString(), change: 'Wariant B – korekta nagłówka Email', reason: 'Wyższy open-rate w segmencie A' },
   ];
 
-  constructor() {
-    // initial load and start auto-refresh
+  // Set up auto-refresh bound to id with cleanup using effect
+  private autoRefreshEffect = effect((onCleanup) => {
+    const cid = this.id;
+    if (!cid) return;
     this.refresh();
-    this.intervalId = setInterval(() => this.refresh(), 15000);
-  }
+    const handle = setInterval(() => this.refresh(), 15000);
+    onCleanup(() => clearInterval(handle));
+  });
 
   ngOnDestroy(): void {
-    if (this.intervalId) {
-      clearInterval(this.intervalId);
-      this.intervalId = null;
-    }
+    // no-op; effect cleanup will clear the interval
   }
 
   refresh() {
@@ -106,9 +106,45 @@ export class CampaignMonitorComponent implements OnDestroy {
     return list;
   }
 
-  onPause() { this.snack.open('Kampania wstrzymana (MVP).', 'OK', { duration: 2500 }); }
-  onResume() { this.snack.open('Kampania wznowiona (MVP).', 'OK', { duration: 2500 }); }
-  onBoostBudget() { this.snack.open('Budżet zwiększony o 20% (MVP).', 'OK', { duration: 2500 }); }
+  // Mock metrics for A/B variants
+  getVariantCtr(channel: string, variant: string): number {
+    const base = this.report()?.ctr?.[channel] ?? 0.03;
+    const tweak = variant === 'A' ? 1.0 : variant === 'B' ? 0.97 : variant === 'C' ? 1.03 : 0.95;
+    return Math.max(0, base * tweak);
+  }
+
+  getVariantConversions(channel: string, variant: string): number {
+    const total = this.report()?.conversions ?? 0;
+    // Distribute conversions evenly across channels and variants (simple mock)
+    const channels = this.campaign()?.channels?.length || 1;
+    const variants = Math.max(2, this.campaign()?.ab_variants || 2);
+    const base = Math.floor(total / (channels * variants));
+    // Small deterministic bump for A variant
+    return base + (variant === 'A' ? 5 : 0);
+  }
+
+  onPause() {
+    this.snack.open('Kampania wstrzymana (MVP).', 'OK', { duration: 2500 });
+    const c = this.campaign();
+    if (c) this.campaign.set({ ...c, status: 'paused' });
+  }
+  onResume() {
+    this.snack.open('Kampania wznowiona (MVP).', 'OK', { duration: 2500 });
+    const c = this.campaign();
+    if (c) this.campaign.set({ ...c, status: 'running' });
+  }
+  onBoostBudget() {
+    this.snack.open('Budżet zwiększony o 20% (MVP).', 'OK', { duration: 2500 });
+    const c = this.campaign();
+    if (c && c.budgets) {
+      const updated: Record<string, number> = {};
+      Object.entries(c.budgets).forEach(([k, v]) => {
+        const num = typeof v === 'number' ? v : 0;
+        updated[k] = Math.round(num * 1.2);
+      });
+      this.campaign.set({ ...c, budgets: updated });
+    }
+  }
   setWinner(channel: string, variant: string) {
     this.snack.open(`Ustawiono zwycięzcę: ${channel.toUpperCase()} – ${variant} (MVP).`, 'OK', { duration: 2500 });
   }

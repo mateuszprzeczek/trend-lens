@@ -8,6 +8,7 @@ import { MatTableModule } from '@angular/material/table';
 import { MatChipsModule } from '@angular/material/chips';
 import { MatListModule } from '@angular/material/list';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
+import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { TrendsApiService } from '../../core/services/trends.api';
 import { TrendDetails, TrendMatch } from '../../core/models/models';
 import { Chart } from 'chart.js/auto';
@@ -16,7 +17,7 @@ import { TranslateModule } from '@ngx-translate/core';
 @Component({
   selector: 'app-trend-detail',
   standalone: true,
-  imports: [CommonModule, MatCardModule, MatButtonModule, MatIconModule, MatTableModule, MatChipsModule, MatListModule, MatProgressSpinnerModule, TranslateModule],
+  imports: [CommonModule, MatCardModule, MatButtonModule, MatIconModule, MatTableModule, MatChipsModule, MatListModule, MatProgressSpinnerModule, MatProgressBarModule, TranslateModule],
   styleUrls: ['./trend-detail.component.scss'],
   templateUrl: './trend-detail.component.html',
 })
@@ -29,6 +30,7 @@ export class TrendDetailComponent implements AfterViewInit, OnDestroy {
   private destroyRef = inject(DestroyRef);
 
   matches = signal<TrendMatch[] | null>(null);
+  loadingMatches = signal<boolean>(false);
   explanations = signal<string[]>([]);
   selected = signal<string[]>([]);
   details = signal<TrendDetails | null>(null);
@@ -45,9 +47,10 @@ export class TrendDetailComponent implements AfterViewInit, OnDestroy {
       if (!trendId) return;
 
       // Matches
+      this.loadingMatches.set(true);
       this.api.getMatches(trendId).subscribe({
-        next: (data) => this.matches.set(data),
-        error: () => this.matches.set([]),
+        next: (data) => { this.matches.set(data); this.loadingMatches.set(false); },
+        error: () => { this.matches.set([]); this.loadingMatches.set(false); },
       });
 
       // Details

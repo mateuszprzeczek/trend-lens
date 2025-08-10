@@ -4,14 +4,16 @@ import { MatCardModule } from '@angular/material/card';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatChipsModule } from '@angular/material/chips';
+import { MatListModule } from '@angular/material/list';
 import { ReportsApiService } from '../../core/services/reports.api';
 import { CampaignReport } from '../../core/models/models';
 import { Chart } from 'chart.js/auto';
+import { TranslateModule } from '@ngx-translate/core';
 
 @Component({
   selector: 'app-campaign-report',
   standalone: true,
-  imports: [CommonModule, NgIf, NgFor, DecimalPipe, MatCardModule, MatButtonModule, MatIconModule, MatChipsModule],
+  imports: [CommonModule, NgIf, NgFor, DecimalPipe, MatCardModule, MatButtonModule, MatIconModule, MatChipsModule, TranslateModule],
   styles: [
     `
     :host { display:block; }
@@ -24,11 +26,11 @@ import { Chart } from 'chart.js/auto';
   ],
   template: `
     <div class="header">
-      <h1 style="margin:0">Raport kampanii #{{ id }}</h1>
+      <h1 style="margin:0">{{ 'report.title' | translate }} #{{ id }}</h1>
       <div>
         <button mat-stroked-button color="primary" (click)="exportPdf()">
           <mat-icon>picture_as_pdf</mat-icon>
-          Eksport PDF
+          {{ 'report.export' | translate }}
         </button>
       </div>
     </div>
@@ -36,38 +38,38 @@ import { Chart } from 'chart.js/auto';
     <div class="badge-row">
       <mat-chip-set>
         <mat-chip *ngIf="report()?.time_to_trend?.launched_days_before_peak != null">
-          Dni przed pikiem: {{ report()?.time_to_trend?.launched_days_before_peak }}
+          {{ 'report.daysToPeak' | translate }}: {{ report()?.time_to_trend?.launched_days_before_peak }}
         </mat-chip>
         <mat-chip *ngIf="report()?.best_variant as bv">
-          Best Creative: {{ (bv.channel || '').toUpperCase() }} – {{ bv.variant }}
+          {{ 'report.bestCreative' | translate }}: {{ (bv.channel || '').toUpperCase() }} – {{ bv.variant }}
         </mat-chip>
       </mat-chip-set>
-      <span class="muted" *ngIf="loading()">Ładowanie raportu...</span>
+      <span class="muted" *ngIf="loading()">{{ 'home.loading' | translate }}</span>
     </div>
 
     <!-- Stat cards -->
     <div class="grid">
       <mat-card appearance="outlined">
-        <mat-card-header><mat-card-title>ROI</mat-card-title></mat-card-header>
+        <mat-card-header><mat-card-title>{{ 'report.roi' | translate }}</mat-card-title></mat-card-header>
         <mat-card-content>
-          <div style="font-size:28px; font-weight:600;">{{ report()?.roi | number:'1.2-2' }}x</div>
-          <div class="muted">Zwrot z inwestycji</div>
+          <div style="font-size:28px; font-weight:600;">{{ (report()?.roi ?? 0) * 100 | number:'1.0-0' }}%</div>
+          <div class="muted">ROI</div>
         </mat-card-content>
       </mat-card>
 
       <mat-card appearance="outlined">
-        <mat-card-header><mat-card-title>Wydatki (Spend)</mat-card-title></mat-card-header>
+        <mat-card-header><mat-card-title>{{ 'report.spend' | translate }}</mat-card-title></mat-card-header>
         <mat-card-content>
-          <div style="font-size:28px; font-weight:600;">{{ report()?.spend | number:'1.0-0' }} PLN</div>
-          <div class="muted">Całkowity koszt</div>
+          <div style="font-size:28px; font-weight:600;">{{ report()?.spend | number:'1.0-0' }} zł</div>
+          <div class="muted">{{ 'report.spend' | translate }}</div>
         </mat-card-content>
       </mat-card>
 
       <mat-card appearance="outlined">
-        <mat-card-header><mat-card-title>Przychód (Revenue)</mat-card-title></mat-card-header>
+        <mat-card-header><mat-card-title>{{ 'report.revenue' | translate }}</mat-card-title></mat-card-header>
         <mat-card-content>
-          <div style="font-size:28px; font-weight:600;">{{ report()?.revenue | number:'1.0-0' }} PLN</div>
-          <div class="muted">Przychód z kampanii</div>
+          <div style="font-size:28px; font-weight:600;">{{ report()?.revenue | number:'1.0-0' }} zł</div>
+          <div class="muted">{{ 'report.revenue' | translate }}</div>
         </mat-card-content>
       </mat-card>
     </div>
@@ -75,7 +77,7 @@ import { Chart } from 'chart.js/auto';
     <!-- CTR per channel chart -->
     <mat-card style="margin-bottom: 16px;">
       <mat-card-header>
-        <mat-card-title>CTR per kanał</mat-card-title>
+        <mat-card-title>CTR</mat-card-title>
       </mat-card-header>
       <mat-card-content>
         <canvas #ctrChart></canvas>
@@ -85,14 +87,14 @@ import { Chart } from 'chart.js/auto';
     <!-- Insights list -->
     <mat-card>
       <mat-card-header>
-        <mat-card-title>Insights</mat-card-title>
+        <mat-card-title>{{ 'report.insights' | translate }}</mat-card-title>
       </mat-card-header>
       <mat-card-content>
-        <ul *ngIf="(report()?.insights?.length || 0) > 0; else noInsights">
-          <li *ngFor="let i of report()?.insights">{{ i }}</li>
-        </ul>
+        <mat-list *ngIf="(report()?.insights?.length || 0) > 0; else noInsights">
+          <mat-list-item *ngFor="let i of report()?.insights">{{ i }}</mat-list-item>
+        </mat-list>
         <ng-template #noInsights>
-          <p class="muted">Brak insightów.</p>
+          <p class="muted">{{ 'report.noInsights' | translate }}</p>
         </ng-template>
       </mat-card-content>
     </mat-card>

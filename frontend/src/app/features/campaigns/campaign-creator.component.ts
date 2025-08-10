@@ -9,6 +9,7 @@ import { MatInputModule } from '@angular/material/input';
 import { MatTabsModule } from '@angular/material/tabs';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 import { MatIconModule } from '@angular/material/icon';
+import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { FormsModule } from '@angular/forms';
 import { CampaignsApiService } from '../../core/services/campaigns.api';
 import { CampaignAssets } from '../../core/models/models';
@@ -28,6 +29,7 @@ import { TranslateModule } from '@ngx-translate/core';
     MatTabsModule,
     MatSnackBarModule,
     MatIconModule,
+    MatProgressBarModule,
     TranslateModule,
   ],
   styleUrls: ['./campaign-creator.component.scss'],
