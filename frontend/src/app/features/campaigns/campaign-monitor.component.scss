@@ -1,0 +1,7 @@
+:host { display:block; }
+.header { display:flex; align-items:center; justify-content:space-between; gap:12px; margin-bottom: 16px; }
+.actions { display:flex; gap:8px; flex-wrap: wrap; }
+.grid { display:grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 12px; }
+.muted { opacity:.8; font-size: 12px; }
+.variants { display:grid; gap:12px; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); }
+table { width: 100%; }

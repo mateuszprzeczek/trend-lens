@@ -1,0 +1,9 @@
+:host, .container { height: 100%; display: block; }
+.spacer { flex: 1 1 auto; }
+.toolbar-content { display: flex; align-items: center; gap: 8px; width: 100%; }
+.brand { font-weight: 600; letter-spacing: 0.3px; }
+.search-field { max-width: 420px; width: 100%; }
+.avatar { width: 32px; height: 32px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; background: rgba(255,255,255,0.12); }
+.content { padding: 16px; }
+@media (max-width: 768px) { .search-field { max-width: 200px; } }
+a.menu-link { text-decoration: none; color: inherit; display: block; }

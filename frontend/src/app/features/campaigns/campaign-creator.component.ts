@@ -12,6 +12,7 @@ import { MatIconModule } from '@angular/material/icon';
 import { FormsModule } from '@angular/forms';
 import { CampaignsApiService } from '../../core/services/campaigns.api';
 import { CampaignAssets } from '../../core/models/models';
+import { TranslateModule } from '@ngx-translate/core';
 
 @Component({
   selector: 'app-campaign-creator',
@@ -27,158 +28,10 @@ import { CampaignAssets } from '../../core/models/models';
     MatTabsModule,
     MatSnackBarModule,
     MatIconModule,
+    TranslateModule,
   ],
-  styles: [
-    `
-    :host { display:block; }
-    .layout { display:grid; gap:16px; }
-    .row { display:flex; flex-wrap:wrap; gap:16px; }
-    .section-title { margin: 0 0 8px 0; }
-    .muted { opacity: .8; font-size: 13px; }
-    .grid-2 { display:grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 16px; }
-    .actions { display:flex; gap:12px; justify-content:flex-end; }
-    textarea { width: 100%; min-height: 120px; }
-    .disabled-info { opacity: .5; }
-    .budget-grid { display:grid; gap:12px; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); }
-    `
-  ],
-  template: `
-    <h1 style="margin:0 0 12px 0">Kreator kampanii</h1>
-    <p class="muted">Trend: <strong>{{ trendId() || '—' }}</strong> · Produkty: <strong>{{ products().join(', ') || '—' }}</strong></p>
-
-    <!-- Step 1: Channels -->
-    <mat-card>
-      <mat-card-header>
-        <mat-card-title>Krok 1: Wybór kanałów</mat-card-title>
-      </mat-card-header>
-      <mat-card-content>
-        <div class="row">
-          <mat-checkbox [(ngModel)]="channels.push">Push</mat-checkbox>
-          <mat-checkbox [(ngModel)]="channels.email">Email</mat-checkbox>
-          <mat-checkbox disabled class="disabled-info">Meta (wkrótce)</mat-checkbox>
-          <mat-checkbox disabled class="disabled-info">Google Ads (wkrótce)</mat-checkbox>
-        </div>
-        <p class="muted" *ngIf="!channels.push && !channels.email">Wybierz przynajmniej jeden kanał.</p>
-      </mat-card-content>
-    </mat-card>
-
-    <!-- Step 2: Brand kit -->
-    <mat-card>
-      <mat-card-header>
-        <mat-card-title>Krok 2: Brand kit</mat-card-title>
-      </mat-card-header>
-      <mat-card-content>
-        <div class="grid-2">
-          <mat-form-field appearance="outline">
-            <mat-label>Tonalność</mat-label>
-            <input matInput [(ngModel)]="brand.tone" placeholder="np. Energetyczny, profesjonalny" />
-          </mat-form-field>
-          <mat-form-field appearance="outline">
-            <mat-label>Kolor podstawowy</mat-label>
-            <input matInput [(ngModel)]="brand.primary" placeholder="#90caf9" />
-          </mat-form-field>
-          <mat-form-field appearance="outline">
-            <mat-label>Kolor dodatkowy</mat-label>
-            <input matInput [(ngModel)]="brand.secondary" placeholder="#ffcc80" />
-          </mat-form-field>
-          <mat-form-field appearance="outline">
-            <mat-label>Logo URL (opcjonalnie)</mat-label>
-            <input matInput [(ngModel)]="brand.logo_url" placeholder="https://..." />
-          </mat-form-field>
-        </div>
-        <div class="row" style="align-items:center; gap:12px; margin-top:8px;">
-          <span class="muted">Podgląd:</span>
-          <span [style.background]="brand.primary" style="display:inline-block;width:24px;height:24px;border-radius:4px;"></span>
-          <span [style.background]="brand.secondary" style="display:inline-block;width:24px;height:24px;border-radius:4px;"></span>
-          <span class="muted">Ton: {{ brand.tone || '—' }}</span>
-        </div>
-      </mat-card-content>
-    </mat-card>
-
-    <!-- Step 3: Assets preview -->
-    <mat-card>
-      <mat-card-header>
-        <mat-card-title>Krok 3: Podgląd assetów</mat-card-title>
-      </mat-card-header>
-      <mat-card-content>
-        <mat-tab-group>
-          <mat-tab label="Push">
-            <div class="grid-2" style="margin-top:12px;">
-              <mat-form-field appearance="outline">
-                <mat-label>Tytuł</mat-label>
-                <input matInput [(ngModel)]="assets.push.title" />
-              </mat-form-field>
-              <mat-form-field appearance="outline">
-                <mat-label>CTA URL</mat-label>
-                <input matInput [(ngModel)]="assets.push.cta_url" />
-              </mat-form-field>
-              <mat-form-field appearance="outline" class="full">
-                <mat-label>Treść</mat-label>
-                <textarea matInput [(ngModel)]="assets.push.body"></textarea>
-              </mat-form-field>
-              <mat-form-field appearance="outline">
-                <mat-label>Ikona URL (opcjonalnie)</mat-label>
-                <input matInput [(ngModel)]="assets.push.icon_url" />
-              </mat-form-field>
-            </div>
-          </mat-tab>
-          <mat-tab label="Email">
-            <div class="grid-2" style="margin-top:12px;">
-              <mat-form-field appearance="outline">
-                <mat-label>Temat</mat-label>
-                <input matInput [(ngModel)]="assets.email.subject" />
-              </mat-form-field>
-              <mat-form-field appearance="outline">
-                <mat-label>Alt text (opcjonalnie)</mat-label>
-                <input matInput [(ngModel)]="assets.email.alt_text" />
-              </mat-form-field>
-              <mat-form-field appearance="outline" class="full">
-                <mat-label>HTML</mat-label>
-                <textarea matInput [(ngModel)]="assets.email.html"></textarea>
-              </mat-form-field>
-            </div>
-          </mat-tab>
-        </mat-tab-group>
-      </mat-card-content>
-      <mat-card-actions class="actions">
-        <button mat-stroked-button color="primary" (click)="onGenerate()" [disabled]="generating() || !canGenerate()">
-          <mat-icon>auto_fix_high</mat-icon>
-          Generuj
-        </button>
-      </mat-card-actions>
-    </mat-card>
-
-    <!-- Step 4: Schedule & budgets -->
-    <mat-card>
-      <mat-card-header>
-        <mat-card-title>Krok 4: Harmonogram i budżety</mat-card-title>
-      </mat-card-header>
-      <mat-card-content>
-        <div class="grid-2">
-          <mat-form-field appearance="outline">
-            <mat-label>Start (data i czas)</mat-label>
-            <input matInput type="datetime-local" [(ngModel)]="schedule" />
-          </mat-form-field>
-        </div>
-        <div class="budget-grid" style="margin-top:12px;">
-          <mat-form-field appearance="outline" *ngIf="channels.push">
-            <mat-label>Budżet Push (PLN)</mat-label>
-            <input matInput type="number" min="0" [(ngModel)]="budgets.push" />
-          </mat-form-field>
-          <mat-form-field appearance="outline" *ngIf="channels.email">
-            <mat-label>Budżet Email (PLN)</mat-label>
-            <input matInput type="number" min="0" [(ngModel)]="budgets.email" />
-          </mat-form-field>
-        </div>
-      </mat-card-content>
-      <mat-card-actions class="actions">
-        <button mat-flat-button color="accent" (click)="onLaunch()" [disabled]="launching() || !campaignId()">
-          <mat-icon>rocket_launch</mat-icon>
-          Uruchom kampanię
-        </button>
-      </mat-card-actions>
-    </mat-card>
-  `,
+  styleUrls: ['./campaign-creator.component.scss'],
+  templateUrl: './campaign-creator.component.html',
 })
 export class CampaignCreatorComponent {
   private route = inject(ActivatedRoute);

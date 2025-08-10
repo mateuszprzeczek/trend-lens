@@ -1,6 +1,6 @@
 import { bootstrapApplication } from '@angular/platform-browser';
 import { provideRouter, withComponentInputBinding } from '@angular/router';
-import { provideHttpClient, withInterceptors } from '@angular/common/http';
+import { provideHttpClient, withInterceptors, HttpClient } from '@angular/common/http';
 import { provideAnimationsAsync } from '@angular/platform-browser/animations/async';
 import { APP_ROUTES } from './app/app.routes';
 import { authInterceptor } from './app/core/interceptors/auth.interceptor';
@@ -8,9 +8,17 @@ import { errorInterceptor } from './app/core/interceptors/error.interceptor';
 import { loadingInterceptor } from './app/core/interceptors/loading.interceptor';
 import { AppComponent } from './app/app.component';
 import { demoInterceptor } from './app/core/interceptors/demo.interceptor';
+import { importProvidersFrom } from '@angular/core';
+import { TranslateLoader, TranslateModule } from '@ngx-translate/core';
+import { TranslateHttpLoader } from '@ngx-translate/http-loader';
 
-// Toggle demo mode (mock API). When true, UI uses mock data via DemoInterceptor.
-const useDemo = true; // set to false to hit real backend via /api proxy
+export function HttpLoaderFactory(http: HttpClient) {
+  return new TranslateHttpLoader(http, './assets/i18n/', '.json');
+}
+
+// Toggle demo mode (mock API) via environment flag
+import { environment } from './environments/environment';
+const useDemo = environment.useDemo; // set in environments
 
 bootstrapApplication(AppComponent, {
   providers: [
@@ -22,6 +30,12 @@ bootstrapApplication(AppComponent, {
       authInterceptor,
       errorInterceptor,
     ])),
+    importProvidersFrom(
+      TranslateModule.forRoot({
+        loader: { provide: TranslateLoader, useFactory: HttpLoaderFactory, deps: [HttpClient] },
+        defaultLanguage: 'en'
+      })
+    ),
     provideAnimationsAsync(),
   ],
 }).catch((err) => console.error(err));

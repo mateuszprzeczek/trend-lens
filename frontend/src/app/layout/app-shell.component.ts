@@ -10,9 +10,10 @@ import { MatInputModule } from '@angular/material/input';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { BreakpointObserver } from '@angular/cdk/layout';
 import { map, shareReplay } from 'rxjs/operators';
-import { NgIf } from '@angular/common';
 import { UIStateService } from '../core/state/ui.state';
 import { CompanyStateService } from '../core/state/company.state';
+import { TranslateModule } from '@ngx-translate/core';
+import { TranslationService } from '../core/services/translation.service';
 
 @Component({
   selector: 'app-shell',
@@ -29,75 +30,13 @@ import { CompanyStateService } from '../core/state/company.state';
     MatFormFieldModule,
     MatInputModule,
     MatProgressBarModule,
-    NgIf,
+    TranslateModule,
   ],
-  styles: [
-    `
-    :host, .container { height: 100%; display: block; }
-    .spacer { flex: 1 1 auto; }
-    .toolbar-content { display: flex; align-items: center; gap: 8px; width: 100%; }
-    .brand { font-weight: 600; letter-spacing: 0.3px; }
-    .search-field { max-width: 420px; width: 100%; }
-    .avatar { width: 32px; height: 32px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; background: rgba(255,255,255,0.12); }
-    .content { padding: 16px; }
-    @media (max-width: 768px) {
-      .search-field { max-width: 200px; }
-    }
-    a.menu-link { text-decoration: none; color: inherit; display: block; }
-    `
-  ],
-  template: `
-    <mat-sidenav-container class="container">
-      <mat-sidenav #drawer [mode]="sidenavMode" [opened]="sidenavOpened">
-        <mat-nav-list>
-          <a mat-list-item class="menu-link" routerLink="/" routerLinkActive="active" (click)="onNavItemClick(drawer)">
-            <mat-icon matListItemIcon>dashboard</mat-icon>
-            <span matListItemTitle>Dashboard</span>
-          </a>
-          <a mat-list-item class="menu-link" [routerLink]="['/campaigns', 1]" routerLinkActive="active" (click)="onNavItemClick(drawer)">
-            <mat-icon matListItemIcon>campaign</mat-icon>
-            <span matListItemTitle>Kampanie</span>
-          </a>
-          <a mat-list-item class="menu-link" [routerLink]="['/reports/campaign', 1]" routerLinkActive="active" (click)="onNavItemClick(drawer)">
-            <mat-icon matListItemIcon>insights</mat-icon>
-            <span matListItemTitle>Raporty</span>
-          </a>
-        </mat-nav-list>
-      </mat-sidenav>
-
-      <mat-sidenav-content>
-        <mat-toolbar color="primary">
-          <div class="toolbar-content">
-            <mat-progress-bar *ngIf="ui.isLoadingGlobal()" mode="indeterminate" color="primary" style="position:absolute; left:0; right:0; top:0;"></mat-progress-bar>
-            <button mat-icon-button aria-label="Menu" (click)="drawer.toggle()" *ngIf="isHandset">
-              <mat-icon>menu</mat-icon>
-            </button>
-            <span class="brand">TrendLens</span>
-            <span class="spacer"></span>
-            <mat-form-field class="search-field" appearance="outline">
-              <mat-label>Szukaj</mat-label>
-              <input matInput placeholder="Trendy, kampanie..." />
-              <button mat-icon-button matSuffix aria-label="search">
-                <mat-icon>search</mat-icon>
-              </button>
-            </mat-form-field>
-            <button mat-icon-button aria-label="Powiadomienia">
-              <mat-icon>notifications</mat-icon>
-            </button>
-            <span class="avatar" aria-label="Avatar">
-              <mat-icon>account_circle</mat-icon>
-            </span>
-          </div>
-        </mat-toolbar>
-
-        <div class="content">
-          <router-outlet></router-outlet>
-        </div>
-      </mat-sidenav-content>
-    </mat-sidenav-container>
-  `,
+  styleUrls: ['./app-shell.component.scss'],
+  templateUrl: './app-shell.component.html',
 })
 export class AppShellComponent {
+  private i18n = inject(TranslationService);
   private breakpoint = inject(BreakpointObserver);
   readonly isHandset$ = this.breakpoint.observe('(max-width: 768px)').pipe(
     map(result => result.matches),
@@ -130,5 +69,9 @@ export class AppShellComponent {
     if (this.isHandset) {
       drawer.close();
     }
+  }
+
+  setLang(lang: 'pl' | 'en') {
+    this.i18n.setLanguage(lang);
   }
 }

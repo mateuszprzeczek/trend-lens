@@ -1,0 +1,10 @@
+:host { display:block; }
+.layout { display:grid; gap:16px; }
+.row { display:flex; flex-wrap:wrap; gap:16px; }
+.section-title { margin: 0 0 8px 0; }
+.muted { opacity: .8; font-size: 13px; }
+.grid-2 { display:grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 16px; }
+.actions { display:flex; gap:12px; justify-content:flex-end; }
+textarea { width: 100%; min-height: 120px; }
+.disabled-info { opacity: .5; }
+.budget-grid { display:grid; gap:12px; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); }

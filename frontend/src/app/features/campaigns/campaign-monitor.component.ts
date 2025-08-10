@@ -1,5 +1,5 @@
 import { Component, Input, OnDestroy, inject, signal } from '@angular/core';
-import { CommonModule, DecimalPipe, PercentPipe, NgFor, NgIf, KeyValuePipe, DatePipe } from '@angular/common';
+import { CommonModule, DecimalPipe, PercentPipe, KeyValuePipe, DatePipe } from '@angular/common';
 import { MatCardModule } from '@angular/material/card';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
@@ -8,14 +8,13 @@ import { MatTableModule } from '@angular/material/table';
 import { CampaignsApiService } from '../../core/services/campaigns.api';
 import { ReportsApiService } from '../../core/services/reports.api';
 import { Campaign, CampaignReport } from '../../core/models/models';
+import { TranslateModule } from '@ngx-translate/core';
 
 @Component({
   selector: 'app-campaign-monitor',
   standalone: true,
   imports: [
     CommonModule,
-    NgIf,
-    NgFor,
     KeyValuePipe,
     DecimalPipe,
     PercentPipe,
@@ -25,129 +24,10 @@ import { Campaign, CampaignReport } from '../../core/models/models';
     MatIconModule,
     MatSnackBarModule,
     MatTableModule,
+    TranslateModule,
   ],
-  styles: [
-    `
-    :host { display:block; }
-    .header { display:flex; align-items:center; justify-content:space-between; gap:12px; margin-bottom: 16px; }
-    .actions { display:flex; gap:8px; flex-wrap: wrap; }
-    .grid { display:grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 12px; }
-    .muted { opacity:.8; font-size: 12px; }
-    .variants { display:grid; gap:12px; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); }
-    table { width: 100%; }
-    `
-  ],
-  template: `
-    <div class="header">
-      <div>
-        <h1 style="margin:0">Monitoring kampanii #{{ id }}</h1>
-        <div class="muted">Ostatnie odświeżenie: {{ lastRefresh() ? (lastRefresh() | date:'HH:mm:ss') : '—' }}</div>
-      </div>
-      <div class="actions">
-        <button mat-stroked-button color="warn" (click)="onPause()">
-          <mat-icon>pause</mat-icon>
-          Pauza
-        </button>
-        <button mat-stroked-button color="primary" (click)="onResume()">
-          <mat-icon>play_arrow</mat-icon>
-          Wznów
-        </button>
-        <button mat-flat-button color="accent" (click)="onBoostBudget()">
-          <mat-icon>trending_up</mat-icon>
-          +20% budżet
-        </button>
-      </div>
-    </div>
-
-    <!-- KPI section -->
-    <div class="grid" style="margin-bottom: 16px;">
-      <mat-card *ngFor="let entry of (report()?.ctr | keyvalue)" appearance="outlined">
-        <mat-card-header>
-          <mat-card-title>CTR – {{ entry.key }}</mat-card-title>
-        </mat-card-header>
-        <mat-card-content>
-          <div style="font-size:24px; font-weight:600;">{{ entry.value | percent:'1.1-2' }}</div>
-          <div class="muted">Klikalność dla kanału</div>
-        </mat-card-content>
-      </mat-card>
-
-      <mat-card appearance="outlined">
-        <mat-card-header><mat-card-title>CPC</mat-card-title></mat-card-header>
-        <mat-card-content>
-          <div style="font-size:24px; font-weight:600;">—</div>
-          <div class="muted">Placeholder</div>
-        </mat-card-content>
-      </mat-card>
-
-      <mat-card appearance="outlined">
-        <mat-card-header><mat-card-title>Wydatki</mat-card-title></mat-card-header>
-        <mat-card-content>
-          <div style="font-size:24px; font-weight:600;">—</div>
-          <div class="muted">Placeholder</div>
-        </mat-card-content>
-      </mat-card>
-
-      <mat-card appearance="outlined">
-        <mat-card-header><mat-card-title>Przychód</mat-card-title></mat-card-header>
-        <mat-card-content>
-          <div style="font-size:24px; font-weight:600;">{{ report()?.revenue | number:'1.0-0' }} PLN</div>
-          <div class="muted">Z raportu</div>
-        </mat-card-content>
-      </mat-card>
-    </div>
-
-    <!-- A/B section -->
-    <mat-card style="margin-bottom: 16px;">
-      <mat-card-header>
-        <mat-card-title>A/B – warianty</mat-card-title>
-      </mat-card-header>
-      <mat-card-content>
-        <div class="variants">
-          <mat-card *ngFor="let v of abVariantsToRender()" appearance="outlined">
-            <mat-card-header>
-              <mat-card-title>{{ v.channel | uppercase }} – wariant {{ v.variant }}</mat-card-title>
-            </mat-card-header>
-            <mat-card-content>
-              <div class="muted">CTR: — · Konwersje: —</div>
-            </mat-card-content>
-            <mat-card-actions>
-              <button mat-button color="primary" (click)="setWinner(v.channel, v.variant)">
-                <mat-icon>emoji_events</mat-icon>
-                Ustaw zwycięzcę
-              </button>
-            </mat-card-actions>
-          </mat-card>
-        </div>
-      </mat-card-content>
-    </mat-card>
-
-    <!-- AI change log demo -->
-    <mat-card>
-      <mat-card-header>
-        <mat-card-title>Log zmian AI</mat-card-title>
-      </mat-card-header>
-      <mat-card-content>
-        <table mat-table [dataSource]="aiLogDemo">
-          <ng-container matColumnDef="time">
-            <th mat-header-cell *matHeaderCellDef>Czas</th>
-            <td mat-cell *matCellDef="let r">{{ r.time }}</td>
-          </ng-container>
-          <ng-container matColumnDef="change">
-            <th mat-header-cell *matHeaderCellDef>Zmiana</th>
-            <td mat-cell *matCellDef="let r">{{ r.change }}</td>
-          </ng-container>
-          <ng-container matColumnDef="reason">
-            <th mat-header-cell *matHeaderCellDef>Powód</th>
-            <td mat-cell *matCellDef="let r">{{ r.reason }}</td>
-          </ng-container>
-
-          <tr mat-header-row *matHeaderRowDef="logColumns"></tr>
-          <tr mat-row *matRowDef="let row; columns: logColumns"></tr>
-        </table>
-        <div class="muted" *ngIf="!aiLogDemo.length">Brak wpisów (demo).</div>
-      </mat-card-content>
-    </mat-card>
-  `,
+  styleUrls: ['./campaign-monitor.component.scss'],
+  templateUrl: './campaign-monitor.component.html',
 })
 export class CampaignMonitorComponent implements OnDestroy {
   @Input() id!: string;
