@@ -3,7 +3,9 @@
   <div class="filters">
     <div class="slider-wrap">
       <label class="muted">{{ 'home.radius' | translate }}: {{ radius() }} km</label>
-      <mat-slider min="10" max="500" step="10" [discrete]="true" [showTickMarks]="true" [value]="radius()" (valueChange)="radius.set($event)"></mat-slider>
+      <mat-slider [min]="10" [max]="500" [step]="10" [discrete]="true" [showTickMarks]="true">
+        <input matSliderThumb [ngModel]="radius()" (ngModelChange)="radius.set($event)" aria-label="Radius" />
+      </mat-slider>
     </div>
     <div class="select-wrap">
       <mat-form-field appearance="outline" style="width: 100%; min-width: 140px;">

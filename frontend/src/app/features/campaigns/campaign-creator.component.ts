@@ -41,41 +41,33 @@ export class CampaignCreatorComponent {
   private api = inject(CampaignsApiService);
   private snack = inject(MatSnackBar);
 
-  // Query params
   trendId = signal<string | null>(null);
   products = signal<string[]>([]);
 
-  // Channels state
   channels = { push: true, email: true } as { push: boolean; email: boolean };
 
-  // Brand kit state
   brand: { tone: string; primary: string; secondary: string; logo_url?: string } = {
     tone: '',
     primary: '#90caf9',
     secondary: '#ffcc80',
   };
 
-  // Assets draft (editable in UI). Keep defaults to avoid undefined bindings
   assets = {
     push: { title: '', body: '', cta_url: '', icon_url: '' },
     email: { subject: '', html: '', alt_text: '' },
   } as Required<CampaignAssets> & { push: { title: string; body: string; icon_url?: string; cta_url: string }; email: { subject: string; html: string; alt_text?: string } };
 
-  // Schedule and budgets
   schedule: string = '';
   budgets: { push?: number; email?: number } = {};
 
-  // Backend campaign state
   campaignId = signal<string | null>(null);
   generating = signal(false);
   launching = signal(false);
 
   constructor() {
-    // Read query params
     this.route.queryParamMap.subscribe((qp) => {
       const tid = qp.get('trend_id');
       let prods = qp.getAll('products');
-      // Support comma-separated string as well
       if (prods.length === 0) {
         const p = qp.get('products');
         if (p) prods = p.split(',');
@@ -105,7 +97,6 @@ export class CampaignCreatorComponent {
     this.api.generate(body).subscribe({
       next: (campaign) => {
         this.campaignId.set(campaign.id);
-        // Prefill assets if provided by backend
         const a = campaign.assets || {};
         if (a.push) {
           this.assets.push.title = a.push.title || this.assets.push.title;

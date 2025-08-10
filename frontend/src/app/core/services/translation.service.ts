@@ -13,26 +13,14 @@ export class TranslationService {
     this.translate.use(browserLang?.match(/en|pl/) ? browserLang : 'en');
   }
 
-  /**
-   * Change the current language
-   * @param lang Language code (e.g., 'en', 'pl')
-   */
   setLanguage(lang: string): void {
     this.translate.use(lang);
   }
 
-  /**
-   * Get the current language
-   * @returns Current language code
-   */
   getCurrentLanguage(): string {
     return this.translate.currentLang;
   }
 
-  /**
-   * Get all supported languages
-   * @returns Array of language codes
-   */
   getLanguages(): string[] {
     return this.translate.getLangs();
   }

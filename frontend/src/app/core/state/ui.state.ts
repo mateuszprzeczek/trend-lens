@@ -2,7 +2,6 @@ import { Injectable, signal, computed } from '@angular/core';
 
 @Injectable({ providedIn: 'root' })
 export class UIStateService {
-  // Keep a counter to support concurrent operations
   private _loadingCount = signal<number>(0);
   readonly isLoadingGlobal = computed<boolean>(() => this._loadingCount() > 0);
 

@@ -46,8 +46,6 @@ import { TranslateModule } from '@ngx-translate/core';
       </mat-chip-set>
       <span class="muted" *ngIf="loading()">{{ 'home.loading' | translate }}</span>
     </div>
-
-    <!-- Stat cards -->
     <div class="grid">
       <mat-card appearance="outlined">
         <mat-card-header><mat-card-title>{{ 'report.roi' | translate }}</mat-card-title></mat-card-header>
@@ -73,8 +71,6 @@ import { TranslateModule } from '@ngx-translate/core';
         </mat-card-content>
       </mat-card>
     </div>
-
-    <!-- CTR per channel chart -->
     <mat-card style="margin-bottom: 16px;">
       <mat-card-header>
         <mat-card-title>CTR</mat-card-title>
@@ -83,8 +79,6 @@ import { TranslateModule } from '@ngx-translate/core';
         <canvas #ctrChart></canvas>
       </mat-card-content>
     </mat-card>
-
-    <!-- Insights list -->
     <mat-card>
       <mat-card-header>
         <mat-card-title>{{ 'report.insights' | translate }}</mat-card-title>
@@ -113,7 +107,6 @@ export class CampaignReportComponent implements AfterViewInit, OnDestroy {
   private chart: Chart | null = null;
 
   constructor() {
-    // Load report when id is set
     effect(() => {
       const rid = this.id;
       if (!rid) return;
@@ -125,7 +118,6 @@ export class CampaignReportComponent implements AfterViewInit, OnDestroy {
           this.updateChart();
         },
         error: () => {
-          // Fallback empty report to render UI gracefully
           this.report.set({
             campaign_id: rid,
             roi: 0,
@@ -143,7 +135,6 @@ export class CampaignReportComponent implements AfterViewInit, OnDestroy {
       });
     });
 
-    // Ensure chart is destroyed when component is destroyed
     this.destroyRef.onDestroy(() => this.ngOnDestroy());
   }
 
@@ -163,20 +154,17 @@ export class CampaignReportComponent implements AfterViewInit, OnDestroy {
   }
 
   private updateChart() {
-    // If view not ready yet
     if (!this.ctrChartRef) return;
     const r = this.report();
     const ctr = r?.ctr || {};
     const labels = Object.keys(ctr);
     const values = labels.map((k) => ctr[k] ?? 0);
 
-    // Destroy existing chart if any
     if (this.chart) {
       this.chart.destroy();
       this.chart = null;
     }
 
-    // If no data, render an empty chart with placeholder labels
     const ctx = this.ctrChartRef.nativeElement.getContext('2d');
     if (!ctx) return;
 
@@ -187,7 +175,7 @@ export class CampaignReportComponent implements AfterViewInit, OnDestroy {
         datasets: [
           {
             label: 'CTR',
-            data: values.length ? values.map((v) => Math.round(v * 10000) / 100) : [0], // percent values
+            data: values.length ? values.map((v) => Math.round(v * 10000) / 100) : [0],
             backgroundColor: ['#90caf9', '#ffcc80', '#a5d6a7', '#ce93d8', '#80cbc4', '#f48fb1'],
           },
         ],

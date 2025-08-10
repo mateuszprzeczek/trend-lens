@@ -7,7 +7,6 @@ import { mockCampaignReport } from '../mock/reports.mock';
 
 function normalizeUrl(url: string): string {
   try {
-    // Strip optional leading origin if any and leading /api
     const u = url || '';
     const a = u.replace(/^https?:\/\/[^/]+/i, '');
     return a.startsWith('/api') ? a.substring(4) : a;
@@ -20,7 +19,6 @@ export const demoInterceptor: HttpInterceptorFn = (req, next) => {
   const url = normalizeUrl(req.url);
   const method = (req.method || 'GET').toUpperCase();
 
-  // Only handle our demo namespaces
   if (!(url.startsWith('/trends') || url.startsWith('/campaigns') || url.startsWith('/reports'))) {
     return next(req);
   }
@@ -29,9 +27,7 @@ export const demoInterceptor: HttpInterceptorFn = (req, next) => {
   let status = 200;
 
   try {
-    // Trends
     if (method === 'GET' && url.startsWith('/trends/recommendations')) {
-      // Extract query params lat,lng,radius_km,limit if present
       const qp = new URLSearchParams(url.split('?')[1] || '');
       const lat = parseFloat(qp.get('lat') || '50.0647');
       const lng = parseFloat(qp.get('lng') || '19.945');
@@ -47,18 +43,16 @@ export const demoInterceptor: HttpInterceptorFn = (req, next) => {
       const id = m?.[1] || '123';
       body = mockTrendMatches(id);
     }
-
-    // Campaigns
     else if (method === 'POST' && url === '/campaigns/generate') {
-      body = mockCampaignGenerate(req.body || { trend_id: '123', products: [], channels: ['push', 'email'] });
+      const payload = (req.body || { trend_id: '123', products: [], channels: ['push', 'email'] }) as Parameters<typeof mockCampaignGenerate>[0];
+      body = mockCampaignGenerate(payload);
     } else if (method === 'POST' && url === '/campaigns/launch') {
-      body = mockCampaignLaunch(req.body || { campaign_id: 'demo-camp-1' });
+      const payload = (req.body || { campaign_id: 'demo-camp-1' }) as Parameters<typeof mockCampaignLaunch>[0];
+      body = mockCampaignLaunch(payload);
     } else if (method === 'GET' && /^\/campaigns\//.test(url)) {
       const id = decodeURIComponent(url.split('/')[2] || 'demo-camp-1');
       body = mockCampaignGet(id);
     }
-
-    // Reports
     else if (method === 'GET' && /^\/reports\/campaign\//.test(url)) {
       const id = decodeURIComponent(url.split('/')[3] || 'demo-camp-1');
       body = mockCampaignReport(id);
@@ -69,7 +63,6 @@ export const demoInterceptor: HttpInterceptorFn = (req, next) => {
   }
 
   if (body === null) {
-    // Not matched – pass through
     return next(req);
   }
 

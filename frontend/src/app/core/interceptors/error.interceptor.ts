@@ -4,9 +4,6 @@ import { throwError } from 'rxjs';
 import { inject } from '@angular/core';
 import { ToastService } from '../services/toast.service';
 
-/**
- * Intercepts HTTP errors (4xx/5xx) and shows a toast message.
- */
 export const errorInterceptor: HttpInterceptorFn = (req, next) => {
   const toast = inject(ToastService);
   return next(req).pipe(

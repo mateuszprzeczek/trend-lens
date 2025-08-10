@@ -49,7 +49,6 @@ export class CampaignMonitorComponent implements OnDestroy {
     { time: new Date(Date.now() - 3600_000).toLocaleString(), change: 'Wariant B – korekta nagłówka Email', reason: 'Wyższy open-rate w segmencie A' },
   ];
 
-  // Set up auto-refresh bound to id with cleanup using effect
   private autoRefreshEffect = effect((onCleanup) => {
     const cid = this.id;
     if (!cid) return;
@@ -59,7 +58,6 @@ export class CampaignMonitorComponent implements OnDestroy {
   });
 
   ngOnDestroy(): void {
-    // no-op; effect cleanup will clear the interval
   }
 
   refresh() {
@@ -106,7 +104,6 @@ export class CampaignMonitorComponent implements OnDestroy {
     return list;
   }
 
-  // Mock metrics for A/B variants
   getVariantCtr(channel: string, variant: string): number {
     const base = this.report()?.ctr?.[channel] ?? 0.03;
     const tweak = variant === 'A' ? 1.0 : variant === 'B' ? 0.97 : variant === 'C' ? 1.03 : 0.95;
@@ -115,11 +112,9 @@ export class CampaignMonitorComponent implements OnDestroy {
 
   getVariantConversions(channel: string, variant: string): number {
     const total = this.report()?.conversions ?? 0;
-    // Distribute conversions evenly across channels and variants (simple mock)
     const channels = this.campaign()?.channels?.length || 1;
     const variants = Math.max(2, this.campaign()?.ab_variants || 2);
     const base = Math.floor(total / (channels * variants));
-    // Small deterministic bump for A variant
     return base + (variant === 'A' ? 5 : 0);
   }
 

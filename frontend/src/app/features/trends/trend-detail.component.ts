@@ -41,19 +41,16 @@ export class TrendDetailComponent implements AfterViewInit, OnDestroy {
   private chart: Chart | null = null;
 
   constructor() {
-    // Load matches and details when id is available
     effect(() => {
       const trendId = this.id;
       if (!trendId) return;
 
-      // Matches
       this.loadingMatches.set(true);
       this.api.getMatches(trendId).subscribe({
         next: (data) => { this.matches.set(data); this.loadingMatches.set(false); },
         error: () => { this.matches.set([]); this.loadingMatches.set(false); },
       });
 
-      // Details
       this.loadingDetails.set(true);
       this.api.getDetails(trendId).subscribe({
         next: (d) => {
@@ -73,10 +70,7 @@ export class TrendDetailComponent implements AfterViewInit, OnDestroy {
   }
 
   ngAfterViewInit(): void {
-    // Initialize chart if details already loaded
     this.updateChart();
-
-    // Ensure chart is destroyed with component
     this.destroyRef.onDestroy(() => this.ngOnDestroy());
   }
 
@@ -88,10 +82,9 @@ export class TrendDetailComponent implements AfterViewInit, OnDestroy {
   }
 
   private updateChart() {
-    if (!this.momentumChartRef) return; // view not ready
+    if (!this.momentumChartRef) return;
     const det = this.details();
 
-    // Destroy existing chart if any
     if (this.chart) {
       this.chart.destroy();
       this.chart = null;
@@ -100,7 +93,6 @@ export class TrendDetailComponent implements AfterViewInit, OnDestroy {
     const ctx = this.momentumChartRef.nativeElement.getContext('2d');
     if (!ctx) return;
 
-    // If no details or no timeline, render empty placeholder
     const timeline = det?.sources_timeline || [];
     if (!timeline.length) {
       this.chart = new Chart(ctx, {
@@ -111,7 +103,6 @@ export class TrendDetailComponent implements AfterViewInit, OnDestroy {
       return;
     }
 
-    // Build labels (unique dates sorted) and series per source
     const dateSet = Array.from(new Set(timeline.map(t => t.date))).sort();
     const labels = dateSet.map(d => this.formatDdMm(d));
 
@@ -153,7 +144,6 @@ export class TrendDetailComponent implements AfterViewInit, OnDestroy {
   }
 
   private formatDdMm(dateStr: string): string {
-    // dateStr expected in YYYY-MM-DD
     const [y, m, d] = dateStr.split('-').map(Number);
     const dd = String(d).padStart(2, '0');
     const mm = String(m).padStart(2, '0');
@@ -161,7 +151,6 @@ export class TrendDetailComponent implements AfterViewInit, OnDestroy {
   }
 
   private withAlpha(hex: string, alpha: number): string {
-    // Accept #RRGGBB
     const m = hex.match(/^#?([\da-f]{2})([\da-f]{2})([\da-f]{2})$/i);
     if (!m) return hex;
     const r = parseInt(m[1], 16);

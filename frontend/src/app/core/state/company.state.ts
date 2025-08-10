@@ -3,7 +3,6 @@ import { Company } from '../models/models';
 
 @Injectable({ providedIn: 'root' })
 export class CompanyStateService {
-  // Mocked company; in future, load from backend
   company = signal<Company>({
     id: 'demo',
     name: 'Demo Co',

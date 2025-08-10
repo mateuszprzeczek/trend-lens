@@ -1,5 +1,6 @@
 import { Component, computed, effect, inject, signal } from '@angular/core';
 import { CommonModule, DecimalPipe, PercentPipe } from '@angular/common';
+import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { MatCardModule } from '@angular/material/card';
 import { MatButtonModule } from '@angular/material/button';
@@ -16,6 +17,7 @@ import { TranslateModule } from '@ngx-translate/core';
   standalone: true,
   imports: [
     CommonModule,
+    FormsModule,
     DecimalPipe,
     PercentPipe,
     MatCardModule,
@@ -33,24 +35,17 @@ export class HomePageComponent {
   private api = inject(TrendsApiService);
   private router = inject(Router);
 
-  // Kraków defaults
   readonly lat = 50.0647;
   readonly lng = 19.945;
 
-  // Signals for filters and data
   radius = signal<number>(200);
   limit = signal<number>(6);
   trends = signal<TrendRecommendation[] | null>(null);
   loading = signal<boolean>(false);
 
-  // Manual refresh trigger to control when requests fire
   private refreshTick = signal<number>(0);
 
-  // Create an effect that runs when refreshTick OR the filters change
-  // For a simple UX, we require clicking the button to refresh (as requested),
-  // but also perform an initial load in the constructor by calling refresh().
   private _refreshEffect = effect(() => {
-    // read signals to establish dependencies
     const _ = this.refreshTick();
     const radius = this.radius();
     const limit = this.limit();
@@ -71,7 +66,6 @@ export class HomePageComponent {
   });
 
   constructor() {
-    // initial load
     this.refresh();
   }
 
@@ -83,7 +77,6 @@ export class HomePageComponent {
     this.router.navigate(['/trends', t.id]);
   }
 
-  // Build normalized source bars
   sourceEntries(t: TrendRecommendation) {
     const entries = Object.entries(t.sources || {});
     if (!entries.length) return [] as Array<{ key: string; value: number; height: number; color: string }>;
@@ -92,7 +85,7 @@ export class HomePageComponent {
     return entries.map(([key, value], idx) => ({
       key,
       value,
-      height: max > 0 ? Math.max(8, (value / max) * 100) : 8, // at least 8%
+      height: max > 0 ? Math.max(8, (value / max) * 100) : 8,
       color: palette[idx % palette.length],
     }));
   }
