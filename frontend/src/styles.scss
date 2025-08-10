@@ -36,6 +36,11 @@ $theme: mat.define-theme(
   border-color: var(--brand-primary) !important;
 }
 
+// MDC circular spinner primary color
+.mdc-circular-progress__indeterminate-circle-graphic {
+  stroke: var(--brand-primary) !important;
+}
+
 html, body {
   height: 100%;
 }

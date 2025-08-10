@@ -1,7 +1,7 @@
 :host { display: block; }
 .header { display:flex; align-items:center; justify-content:space-between; gap: 16px; margin-bottom: 16px; }
 .filters { display:flex; flex-wrap:wrap; align-items:center; gap: 16px; }
-.grid { display:grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 16px; }
+.grid { display:grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 16px; }
 .sources { display:flex; align-items:flex-end; gap:4px; height: 24px; margin-top: 8px; }
 .bar { width: 8px; background: rgba(255,255,255,0.5); border-radius: 2px; }
 .card-header { display:flex; align-items:center; justify-content:space-between; gap: 8px; }
