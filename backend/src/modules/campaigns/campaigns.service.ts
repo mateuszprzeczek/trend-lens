@@ -52,7 +52,7 @@ export class CampaignsService {
     });
 
     // Audit log: CAMPAIGN:GENERATE
-    await this.prisma.auditLog.create({
+    await (this.prisma as any).auditLog.create({
       data: {
         companyId: resolvedCompanyId,
         entity: AuditEntity.CAMPAIGN,
@@ -93,7 +93,7 @@ export class CampaignsService {
     });
 
     // Audit log: CAMPAIGN:LAUNCH
-    await this.prisma.auditLog.create({
+    await (this.prisma as any).auditLog.create({
       data: {
         companyId: resolvedCompanyId,
         entity: AuditEntity.CAMPAIGN,

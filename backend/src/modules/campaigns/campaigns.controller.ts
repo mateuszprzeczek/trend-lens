@@ -2,7 +2,7 @@ import { Body, Controller, Post, Req } from '@nestjs/common';
 import { CampaignsService } from './campaigns.service';
 import { GenerateCampaignDto } from './dto/generate-campaign.dto';
 import { LaunchCampaignDto } from './dto/launch-campaign.dto';
-import { Request } from 'express';
+import type { Request } from 'express';
 
 @Controller('campaigns')
 export class CampaignsController {

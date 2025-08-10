@@ -1,7 +1,7 @@
 import { Controller, Get, Param, Query, Req } from '@nestjs/common';
 import { TrendsService } from './trends.service';
 import { GetRecommendationsDto } from './dto/get-recommendations.dto';
-import { Request } from 'express';
+import type { Request } from 'express';
 
 @Controller('trends')
 export class TrendsController {

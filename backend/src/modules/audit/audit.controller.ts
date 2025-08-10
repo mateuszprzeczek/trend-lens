@@ -1,7 +1,7 @@
 import { Controller, Get, Query, Req } from '@nestjs/common';
 import { AuditService } from './audit.service';
 import { GetAuditDto } from './dto/get-audit.dto';
-import { Request } from 'express';
+import type { Request } from 'express';
 
 @Controller('audit')
 export class AuditController {
