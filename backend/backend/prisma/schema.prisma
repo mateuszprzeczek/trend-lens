@@ -1,0 +1,220 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Company {
+  id             String        @id @default(cuid())
+  name           String
+  geoLat         Float
+  geoLng         Float
+  radiusKm       Int
+  language       String
+  brandPrimary   String?
+  brandSecondary String?
+  brandTone      String?
+  logoUrl        String?
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+
+  // Relations
+  integrations   Integration[]
+  products       Product[]
+  campaigns      Campaign[]
+  users          User[]
+}
+
+model Integration {
+  id        String   @id @default(cuid())
+  companyId String
+  type      IntegrationType
+  apiKey    String
+  meta      Json?
+  createdAt DateTime @default(now())
+
+  // Relations
+  company   Company  @relation(fields: [companyId], references: [id])
+
+  @@index([companyId])
+}
+
+enum IntegrationType {
+  ONESIGNAL
+  SENDGRID
+  MAILGUN
+  META
+  GADS
+}
+
+model Product {
+  id           String          @id @default(cuid())
+  companyId    String
+  title        String
+  description  String
+  price        Decimal
+  margin       Float
+  availability ProductAvailability
+  media        Json?
+  tags         String[]
+  embedding    Json?
+  createdAt    DateTime        @default(now())
+  updatedAt    DateTime        @updatedAt
+
+  // Relations
+  company      Company         @relation(fields: [companyId], references: [id])
+
+  @@index([companyId])
+}
+
+enum ProductAvailability {
+  IN_STOCK
+  LIMITED
+  OUT
+}
+
+model TrendCluster {
+  id        String   @id @default(cuid())
+  name      String
+  createdAt DateTime @default(now())
+
+  // Relations
+  trends    Trend[]
+}
+
+model Trend {
+  id                  String        @id @default(cuid())
+  name                String
+  clusterId           String
+  score               Float
+  growth7d            Float
+  forecastPeakInDays  Int?
+  sources             Json
+  explanations        String[]
+  createdAt           DateTime      @default(now())
+
+  // Relations
+  cluster             TrendCluster  @relation(fields: [clusterId], references: [id])
+  signals             TrendSignal[]
+  campaigns           Campaign[]
+
+  @@index([clusterId])
+}
+
+model TrendSignal {
+  id        String           @id @default(cuid())
+  trendId   String
+  source    TrendSignalSource
+  value     Float
+  ts        DateTime
+
+  // Relations
+  trend     Trend            @relation(fields: [trendId], references: [id])
+
+  @@index([trendId])
+}
+
+enum TrendSignalSource {
+  GOOGLE_TRENDS
+  REDDIT
+  YOUTUBE
+}
+
+model Campaign {
+  id        String          @id @default(cuid())
+  companyId String
+  trendId   String
+  status    CampaignStatus
+  schedule  DateTime?
+  channels  String[]
+  budgets   Json?
+  abVariants Int
+  assets    Json?
+  createdAt DateTime        @default(now())
+  updatedAt DateTime        @updatedAt
+
+  // Relations
+  company   Company         @relation(fields: [companyId], references: [id])
+  trend     Trend           @relation(fields: [trendId], references: [id])
+  metrics   Metric[]
+
+  @@index([companyId])
+  @@index([trendId])
+}
+
+enum CampaignStatus {
+  DRAFT
+  SCHEDULED
+  RUNNING
+  PAUSED
+  FINISHED
+}
+
+model Metric {
+  id         String       @id @default(cuid())
+  campaignId String
+  channel    String
+  variant    String?
+  event      MetricEvent
+  value      Float?
+  ts         DateTime
+
+  // Relations
+  campaign   Campaign     @relation(fields: [campaignId], references: [id])
+
+  @@index([campaignId])
+}
+
+enum MetricEvent {
+  IMPRESSION
+  OPEN
+  CLICK
+  CONVERSION
+}
+
+model User {
+  id           String    @id @default(cuid())
+  email        String    @unique
+  passwordHash String
+  companyId    String
+  role         UserRole
+  createdAt    DateTime  @default(now())
+
+  // Relations
+  company      Company   @relation(fields: [companyId], references: [id])
+
+  @@index([companyId])
+}
+
+enum UserRole {
+  ADMIN
+  MARKETER
+  VIEWER
+}
+
+model AuditLog {
+  id        String      @id @default(cuid())
+  companyId String
+  entity    AuditEntity
+  entityId  String
+  action    String
+  details   Json?
+  createdAt DateTime    @default(now())
+
+  // Relations
+  company   Company     @relation(fields: [companyId], references: [id])
+
+  @@index([companyId])
+  @@index([entity, entityId])
+}
+
+enum AuditEntity {
+  TREND
+  CAMPAIGN
+}
