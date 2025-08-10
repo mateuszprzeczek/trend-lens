@@ -23,3 +23,7 @@ yarn-error.log*
 
 # OS
 .DS_Store
+
+
+# Angular workspace cache
+frontend/.angular/
