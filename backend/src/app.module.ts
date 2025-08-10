@@ -10,20 +10,24 @@ import { MetricsModule } from './modules/metrics/metrics.module';
 import { AuthModule } from './modules/auth/auth.module';
 import { AuditModule } from './modules/audit/audit.module';
 import { ReportsModule } from './modules/reports/reports.module';
+import { SchedulerModule } from './scheduler/scheduler.module';
+import { IntegrationsModule } from './modules/integrations/integrations.module';
 
-@Module({
-  imports: [
-    PrismaModule,
-    CompaniesModule,
-    ProductsModule,
-    TrendsModule,
-    CampaignsModule,
-    MetricsModule,
-    AuthModule,
-    AuditModule,
-    ReportsModule,
-  ],
-  controllers: [AppController],
-  providers: [AppService],
-})
-export class AppModule {}
+ @Module({
+   imports: [
+     PrismaModule,
+     CompaniesModule,
+     ProductsModule,
+     TrendsModule,
+     CampaignsModule,
+     MetricsModule,
+     AuthModule,
+     AuditModule,
+     ReportsModule,
+     SchedulerModule,
+     IntegrationsModule,
+   ],
+   controllers: [AppController],
+   providers: [AppService],
+ })
+ export class AppModule {}

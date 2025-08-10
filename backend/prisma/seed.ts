@@ -1,4 +1,4 @@
-import { PrismaClient, Prisma, ProductAvailability, TrendSignalSource, UserRole } from '@prisma/client';
+import { PrismaClient, Prisma, ProductAvailability, TrendSignalSource, UserRole, CampaignStatus, MetricEvent } from '@prisma/client';
 import crypto from 'crypto';
 
 const prisma = new PrismaClient();
@@ -111,8 +111,10 @@ async function main() {
           { source: 'REDDIT', weight: 0.4 },
         ],
         explanations: [
-          'Wzrost zapytań dla frazy „dom modułowy L 70m2”',
-          'Sezonowo rosnący popyt na małe metraże',
+          'Wzrost zapytań „dom modułowy L 70m2” (+42% 7d)',
+          'Artykuły poradnikowe o zabudowie wąskich działek',
+          'Nowe wątki na forach w Małopolsce',
+          'Więcej zapytań o projekty L‑kształtne',
         ],
       },
     }),
@@ -128,8 +130,9 @@ async function main() {
           { source: 'YOUTUBE', weight: 0.5 },
         ],
         explanations: [
-          'Więcej materiałów video o elewacjach z thermo-drewna',
+          'Więcej filmów o thermo‑drewnie (+28% 7d)',
           'Moda na naturalne wykończenia',
+          'Skoki wzmianek w regionach górskich',
         ],
       },
     }),
@@ -145,27 +148,145 @@ async function main() {
           { source: 'GOOGLE_TRENDS', weight: 0.55 },
         ],
         explanations: [
-          'Rosnąca liczba wzmianek o domach bez pozwolenia',
-          'Zmiany przepisów budowlanych zwiększają zainteresowanie',
+          'Wzrost zapytań 7d (+35%)',
+          'Nowe interpretacje przepisów (media lokalne)',
+          'Dyskusje o całorocznych rozwiązaniach',
+          'Wzmożona aktywność grup na FB',
         ],
       },
     }),
   ]);
 
-  // TrendSignals (random-ish per trend)
+  // TrendSignals – 14 dni, łagodny wzrost; jeden trend z wyraźnym przyspieszeniem
   const trendList = await prisma.trend.findMany({ where: { clusterId: cluster.id } });
   const now = new Date();
+  // Używamy północy UTC dla spójności z agregacją w TrendsService
+  const todayUtc = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()));
   for (const t of trendList) {
     const signals = [] as Prisma.TrendSignalCreateManyInput[];
-    for (let i = 6; i >= 0; i--) {
-      const ts = new Date(now);
-      ts.setDate(now.getDate() - i);
-      const base = Math.random() * 100 + 50;
-      signals.push({ trendId: t.id, source: TrendSignalSource.GOOGLE_TRENDS, value: Math.round((base + Math.random() * 20) * 10) / 10, ts });
-      signals.push({ trendId: t.id, source: TrendSignalSource.REDDIT, value: Math.round((base / 3 + Math.random() * 10) * 10) / 10, ts });
-      signals.push({ trendId: t.id, source: TrendSignalSource.YOUTUBE, value: Math.round((base / 2 + Math.random() * 15) * 10) / 10, ts });
+    // Bazowe parametry wzrostu dla źródeł
+    const baseGoogle = 100 + Math.random() * 30;
+    const baseReddit = 30 + Math.random() * 15;
+    const baseYouTube = 60 + Math.random() * 20;
+
+    const factorGoogle = 2 + Math.random() * 1.5;
+    const factorReddit = 1 + Math.random() * 1.0;
+    const factorYouTube = 1.5 + Math.random() * 1.0;
+
+    for (let d = 13; d >= 0; d--) {
+      const dayUtc = new Date(todayUtc);
+      dayUtc.setUTCDate(todayUtc.getUTCDate() - d);
+
+      // Indeks dnia rosnąco 0..13
+      const dayIndex = 13 - d;
+
+      // Przyspieszenie dla trendu "35m² bez pozwolenia" w ostatnich 5 dniach
+      const accelerated = t.name.includes('35m²');
+      const accelBoost = accelerated && dayIndex >= 9 ? Math.pow(dayIndex - 8, 2) * 1.8 : 0; // wyraźny bump
+
+      const noise = () => (Math.random() - 0.5) * 3; // ±1.5
+
+      const gVal = baseGoogle + dayIndex * factorGoogle + accelBoost + noise();
+      const rVal = baseReddit + dayIndex * factorReddit + (accelerated ? accelBoost * 0.35 : 0) + noise();
+      const yVal = baseYouTube + dayIndex * factorYouTube + (accelerated ? accelBoost * 0.6 : 0) + noise();
+
+      signals.push({ trendId: t.id, source: TrendSignalSource.GOOGLE_TRENDS, value: Math.round(gVal * 10) / 10, ts: dayUtc });
+      signals.push({ trendId: t.id, source: TrendSignalSource.REDDIT, value: Math.round(rVal * 10) / 10, ts: dayUtc });
+      signals.push({ trendId: t.id, source: TrendSignalSource.YOUTUBE, value: Math.round(yVal * 10) / 10, ts: dayUtc });
     }
     await prisma.trendSignal.createMany({ data: signals });
+  }
+
+  // Create a demo campaign for metrics demo
+  const demoTrend = trendList[0];
+  const schedule = new Date(Date.now() - 6 * 60 * 60 * 1000); // 6h ago
+  const campaign = await prisma.campaign.create({
+    data: {
+      companyId: company.id,
+      trendId: demoTrend.id,
+      status: CampaignStatus.RUNNING,
+      schedule,
+      channels: ['push', 'email'],
+      budgets: { push: 300, email: 300 } as unknown as Prisma.JsonObject,
+      abVariants: 2,
+      assets: { copies: [{ channel: 'push', variant: 'A' }, { channel: 'push', variant: 'B' }, { channel: 'email', variant: 'A' }, { channel: 'email', variant: 'B' }] } as unknown as Prisma.JsonObject,
+    },
+  });
+
+  // Generate 24h metrics for push and email
+  const start = new Date(Date.now() - 24 * 60 * 60 * 1000);
+  const end = new Date();
+  const stepMin = 15; // every 15 minutes
+  const slots = Math.floor((end.getTime() - start.getTime()) / (stepMin * 60 * 1000));
+  // Target totals per channel
+  const targets = {
+    push: { IMPRESSION: 1000, OPEN: 220, CLICK: 60, CONVERSION: 8 },
+    email: { IMPRESSION: 1200, OPEN: 380, CLICK: 70, CONVERSION: 12 },
+  } as Record<string, Record<'IMPRESSION'|'OPEN'|'CLICK'|'CONVERSION', number>>;
+
+  // helper to generate weight curve with morning/evening peaks
+  function weightFor(t: Date) {
+    const hour = t.getHours() + t.getMinutes() / 60;
+    const morning = Math.max(0, Math.cos(((hour - 9) / 6) * Math.PI));
+    const evening = Math.max(0, Math.cos(((hour - 20) / 6) * Math.PI));
+    return 0.6 * morning + 0.8 * evening + 0.2; // base
+  }
+
+  const metricsBatch: Prisma.MetricCreateManyInput[] = [];
+  for (const channel of ['push', 'email'] as const) {
+    // Build weights per slot
+    const times: Date[] = [];
+    const weights: number[] = [];
+    for (let i = 0; i <= slots; i++) {
+      const ts = new Date(start.getTime() + i * stepMin * 60 * 1000);
+      times.push(ts);
+      weights.push(weightFor(ts));
+    }
+    const sumW = weights.reduce((s, v) => s + v, 0) || 1;
+    const norm = weights.map((w) => w / sumW);
+
+    // Distribute counts per event type
+    const assignCounts = (total: number) => {
+      const arr = new Array(times.length).fill(0);
+      let remaining = total;
+      for (let i = 0; i < times.length; i++) {
+        // expected count with small noise
+        const expected = total * norm[i];
+        const val = Math.max(0, Math.round(expected + (Math.random() - 0.5)));
+        arr[i] = val;
+        remaining -= val;
+      }
+      // fix rounding leftovers
+      while (remaining > 0) {
+        const i = Math.floor(Math.random() * arr.length);
+        arr[i] += 1;
+        remaining -= 1;
+      }
+      return arr as number[];
+    };
+
+    const imp = assignCounts(targets[channel].IMPRESSION);
+    const open = assignCounts(targets[channel].OPEN);
+    const click = assignCounts(targets[channel].CLICK);
+    const conv = assignCounts(targets[channel].CONVERSION);
+
+    for (let i = 0; i < times.length; i++) {
+      const ts = times[i];
+      const variant = Math.random() < 0.5 ? 'A' : 'B';
+      if (imp[i] > 0) metricsBatch.push({ campaignId: campaign.id, channel, variant, event: MetricEvent.IMPRESSION, value: imp[i], ts });
+      if (open[i] > 0) metricsBatch.push({ campaignId: campaign.id, channel, variant, event: MetricEvent.OPEN, value: open[i], ts });
+      if (click[i] > 0) metricsBatch.push({ campaignId: campaign.id, channel, variant, event: MetricEvent.CLICK, value: click[i], ts });
+      if (conv[i] > 0) {
+        // Split conversions into single events with revenue values
+        for (let k = 0; k < conv[i]; k++) {
+          const revenue = channel === 'email' ? 600 + Math.random() * 900 : 400 + Math.random() * 700;
+          metricsBatch.push({ campaignId: campaign.id, channel, variant, event: MetricEvent.CONVERSION, value: Math.round(revenue * 100) / 100, ts });
+        }
+      }
+    }
+  }
+  if (metricsBatch.length > 0) {
+    await prisma.metric.createMany({ data: metricsBatch });
   }
 
   // Admin user
@@ -182,6 +303,7 @@ async function main() {
     company: company.name,
     products: productsAll.length,
     trends: trendList.length,
+    campaign: campaign.id,
     admin: admin.email,
   });
 }

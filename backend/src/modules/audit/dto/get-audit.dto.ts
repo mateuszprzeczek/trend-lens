@@ -1,4 +1,4 @@
-import { IsEnum, IsOptional, IsString } from 'class-validator';
+import { IsEnum, IsInt, IsOptional, IsString, Max, Min } from 'class-validator';
 import type { AuditEntity } from '../audit.service';
 
 export class GetAuditDto {
@@ -9,4 +9,10 @@ export class GetAuditDto {
   @IsOptional()
   @IsString()
   entityId?: string;
+
+  @IsOptional()
+  @IsInt()
+  @Min(1)
+  @Max(200)
+  limit?: number;
 }

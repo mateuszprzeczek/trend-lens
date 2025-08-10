@@ -6,6 +6,51 @@ import { GetRecommendationsDto } from './dto/get-recommendations.dto';
 export class TrendsService {
   constructor(private prisma: PrismaService) {}
 
+  async getDetails(id: string) {
+    const trend = await this.prisma.trend.findUnique({ where: { id }, select: { id: true, name: true, explanations: true } });
+    if (!trend) {
+      throw new NotFoundException('Trend not found');
+    }
+    const now = new Date();
+    const from = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()));
+    from.setUTCDate(from.getUTCDate() - 13); // include today and previous 13 days => 14 days
+
+    const signals = await this.prisma.trendSignal.findMany({
+      where: {
+        trendId: id,
+        ts: { gte: from },
+      },
+      orderBy: { ts: 'asc' },
+    });
+
+    type Source = 'GOOGLE_TRENDS' | 'REDDIT' | 'YOUTUBE';
+    const grouped = new Map<string, Map<Source, number>>();
+    for (const s of signals) {
+      const date = new Date(s.ts);
+      const day = new Date(Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate())).toISOString().slice(0, 10);
+      const src = s.source as Source;
+      if (!grouped.has(day)) grouped.set(day, new Map());
+      const inner = grouped.get(day)!;
+      inner.set(src, (inner.get(src) ?? 0) + (typeof s.value === 'number' ? s.value : Number(s.value as any)));
+    }
+
+    const sources_timeline: { date: string; mentions: number; source: Source }[] = [];
+    const days = Array.from(grouped.keys()).sort();
+    for (const day of days) {
+      const inner = grouped.get(day)!;
+      for (const [src, sum] of inner.entries()) {
+        sources_timeline.push({ date: day, mentions: Math.round(sum), source: src });
+      }
+    }
+
+    return {
+      id: trend.id,
+      name: trend.name,
+      explanations: trend.explanations,
+      sources_timeline,
+    };
+  }
+
   async getRecommendations(query: GetRecommendationsDto) {
     const limit = query.limit ?? 5;
     // Try to fetch existing trends; if none, return mock data

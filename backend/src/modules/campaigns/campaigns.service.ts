@@ -1,12 +1,14 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
-import { Prisma, CampaignStatus, AuditEntity } from '@prisma/client';
+import { Prisma, CampaignStatus } from '@prisma/client';
 import { PrismaService } from '../../prisma/prisma.service';
 import { GenerateCampaignDto } from './dto/generate-campaign.dto';
 import { LaunchCampaignDto } from './dto/launch-campaign.dto';
+import { OneSignalClient } from '../integrations/onesignal.client';
+import { SendGridClient } from '../integrations/sendgrid.client';
 
 @Injectable()
 export class CampaignsService {
-  constructor(private prisma: PrismaService) {}
+  constructor(private prisma: PrismaService, private oneSignal: OneSignalClient, private sendGrid: SendGridClient) {}
 
   private async resolveCompanyId(companyId?: string): Promise<string | undefined> {
     if (companyId) return companyId;
@@ -55,7 +57,7 @@ export class CampaignsService {
     await (this.prisma as any).auditLog.create({
       data: {
         companyId: resolvedCompanyId,
-        entity: AuditEntity.CAMPAIGN,
+        entity: 'CAMPAIGN',
         entityId: campaign.id,
         action: 'CAMPAIGN:GENERATE',
         details: {
@@ -63,7 +65,7 @@ export class CampaignsService {
           products: body.products,
           channels: body.channels,
           abVariants,
-        } as Prisma.JsonObject,
+        } as any,
       },
     });
 
@@ -96,7 +98,7 @@ export class CampaignsService {
     await (this.prisma as any).auditLog.create({
       data: {
         companyId: resolvedCompanyId,
-        entity: AuditEntity.CAMPAIGN,
+        entity: 'CAMPAIGN',
         entityId: updated.id,
         action: 'CAMPAIGN:LAUNCH',
         details: {
@@ -104,9 +106,42 @@ export class CampaignsService {
           budgets: body.budgets ?? {},
           audiences: body.audiences ?? {},
           status,
-        } as Prisma.JsonObject,
+        } as any,
       },
     });
+
+    // Trigger stub integrations according to channels
+    const channels = ((updated.channels as unknown as string[]) || []).map((c) => String(c).toLowerCase());
+    const audiences = body.audiences ?? {};
+
+    // Fetch company and trend for defaults
+    const [company, trend] = await Promise.all([
+      this.prisma.company.findUnique({ where: { id: resolvedCompanyId } }),
+      this.prisma.trend.findUnique({ where: { id: updated.trendId } }),
+    ]);
+
+    const assets = (updated.assets as any) || {};
+    const copies: any[] = Array.isArray(assets.copies) ? assets.copies : [];
+
+    if (channels.includes('push')) {
+      const pushCopy = copies.find((c) => c.channel === 'push');
+      const title = `Trend: ${trend?.name ?? 'Kampania'}`;
+      const bodyText = pushCopy?.text || `Sprawdź temat: ${trend?.name ?? 'trend'}`;
+      const icon = company?.logoUrl || null;
+      const url = 'https://example.com';
+      const audience = Array.isArray(audiences.push) ? audiences.push : ['all'];
+      await this.oneSignal.sendPush(resolvedCompanyId, updated.id, { title, body: bodyText, icon, url, audience });
+    }
+
+    if (channels.includes('email')) {
+      const emailCopy = copies.find((c) => c.channel === 'email');
+      const subject = emailCopy?.subject || `Nowości: ${trend?.name ?? 'Trend'}`;
+      const htmlBody = emailCopy?.body
+        ? `<h1>${subject}</h1><p>${emailCopy.body}</p>`
+        : `<h1>${subject}</h1><p>Poznaj szczegóły trendu i naszej oferty.</p>`;
+      const list = Array.isArray(audiences.email) ? audiences.email : ['newsletter'];
+      await this.sendGrid.sendEmail(resolvedCompanyId, updated.id, { subject, html: htmlBody, list });
+    }
 
     return { campaignId: updated.id, status: updated.status, schedule: updated.schedule };
   }

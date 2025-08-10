@@ -29,6 +29,7 @@ model Company {
   products       Product[]
   campaigns      Campaign[]
   users          User[]
+  auditLogs      AuditLog[]
 }
 
 model Integration {

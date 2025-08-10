@@ -20,9 +20,8 @@ export class IngestMetricDto {
   @IsString()
   variant?: string; // e.g., A, B
 
-  @IsString()
-  @IsNotEmpty()
-  event: string; // will be mapped to MetricEvent enum (case-insensitive)
+  @IsEnum(MetricEventDtoEnum)
+  event: MetricEventDtoEnum; // strict enum
 
   @IsOptional()
   @IsNumber()

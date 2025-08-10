@@ -1,6 +1,6 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
-import { IngestMetricDto } from './dto/ingest-metric.dto';
+import { IngestMetricDto, MetricEventDtoEnum } from './dto/ingest-metric.dto';
 import { MetricEvent } from '@prisma/client';
 
 @Injectable()
@@ -11,9 +11,21 @@ export class MetricsService {
     const campaign = await this.prisma.campaign.findUnique({ where: { id: dto.campaignId } });
     if (!campaign) throw new NotFoundException('Campaign not found');
 
-    const eventUpper = (dto.event || '').toUpperCase();
+    // Validate event explicitly (DTO already restricts, but double-check)
+    const eventUpper = String(dto.event || '').toUpperCase();
     const allowed: MetricEvent[] = ['IMPRESSION', 'OPEN', 'CLICK', 'CONVERSION'] as any;
-    const event: MetricEvent = (allowed.includes(eventUpper as any) ? eventUpper : 'CLICK') as MetricEvent;
+    if (!allowed.includes(eventUpper as any)) {
+      throw new BadRequestException('Invalid event');
+    }
+    const event: MetricEvent = eventUpper as MetricEvent;
+
+    // Validate timestamp: must be ISO (DTO) and not further than now()+5m
+    const tsDate = new Date(dto.ts);
+    const now = new Date();
+    const maxFuture = new Date(now.getTime() + 5 * 60 * 1000);
+    if (tsDate.getTime() > maxFuture.getTime()) {
+      throw new BadRequestException('ts cannot be more than 5 minutes in the future');
+    }
 
     const metric = await this.prisma.metric.create({
       data: {
@@ -22,9 +34,21 @@ export class MetricsService {
         variant: dto.variant ?? null,
         event,
         value: dto.value ?? 1,
-        ts: new Date(dto.ts),
+        ts: tsDate,
       },
     });
-    return { id: metric.id };
+
+    // Compute totals for campaign after insert
+    const metrics = await this.prisma.metric.findMany({ where: { campaignId: dto.campaignId } });
+    const totals = { impressions: 0, opens: 0, clicks: 0, conversions: 0 } as { impressions: number; opens: number; clicks: number; conversions: number };
+    for (const m of metrics) {
+      const val = m.value ?? 1;
+      if (m.event === 'IMPRESSION') totals.impressions += val;
+      if (m.event === 'OPEN') totals.opens += val;
+      if (m.event === 'CLICK') totals.clicks += val;
+      if (m.event === 'CONVERSION') totals.conversions += 1;
+    }
+
+    return { id: metric.id, totals };
   }
 }
