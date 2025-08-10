@@ -1,29 +1,30 @@
 <div class="header">
   <div>
-    <h1 style="margin:0">{{ 'monitor.title' | t }} #{{ id }}</h1>
+    <h1 style="margin:0">{{ 'monitor.title' | translate }} #{{ id }}</h1>
     <div class="muted">Ostatnie odświeżenie: {{ lastRefresh() ? (lastRefresh() | date:'HH:mm:ss') : '—' }}</div>
   </div>
   <div class="actions">
     <button mat-stroked-button color="warn" (click)="onPause()">
       <mat-icon>pause</mat-icon>
-      {{ 'monitor.pause' | t }}
+      {{ 'monitor.pause' | translate }}
     </button>
     <button mat-stroked-button color="primary" (click)="onResume()">
       <mat-icon>play_arrow</mat-icon>
-      {{ 'monitor.resume' | t }}
+      {{ 'monitor.resume' | translate }}
     </button>
     <button mat-flat-button color="accent" (click)="onBoostBudget()">
       <mat-icon>trending_up</mat-icon>
-      {{ 'monitor.boost' | t }}
+      {{ 'monitor.boost' | translate }}
     </button>
   </div>
 </div>
 
 <div class="grid" style="margin-bottom: 16px;">
+  @if (loading()) { <mat-progress-bar mode="indeterminate"></mat-progress-bar> }
   @for (entry of (report()?.ctr | keyvalue); track entry.key) {
     <mat-card appearance="outlined">
       <mat-card-header>
-        <mat-card-title>{{ 'monitor.kpi.ctr' | t }} {{ entry.key }}</mat-card-title>
+        <mat-card-title>{{ 'monitor.kpi.ctr' | translate }} {{ entry.key }}</mat-card-title>
       </mat-card-header>
       <mat-card-content>
         <div style="font-size:24px; font-weight:600;">{{ entry.value | percent:'1.1-2' }}</div>
@@ -33,7 +34,7 @@
   }
 
   <mat-card appearance="outlined">
-    <mat-card-header><mat-card-title>{{ 'monitor.kpi.cpc' | t }}</mat-card-title></mat-card-header>
+    <mat-card-header><mat-card-title>{{ 'monitor.kpi.cpc' | translate }}</mat-card-title></mat-card-header>
     <mat-card-content>
       <div style="font-size:24px; font-weight:600;">—</div>
       <div class="muted">Placeholder</div>
@@ -41,7 +42,7 @@
   </mat-card>
 
   <mat-card appearance="outlined">
-    <mat-card-header><mat-card-title>{{ 'monitor.kpi.spend' | t }}</mat-card-title></mat-card-header>
+    <mat-card-header><mat-card-title>{{ 'monitor.kpi.spend' | translate }}</mat-card-title></mat-card-header>
     <mat-card-content>
       <div style="font-size:24px; font-weight:600;">—</div>
       <div class="muted">Placeholder</div>
@@ -49,7 +50,7 @@
   </mat-card>
 
   <mat-card appearance="outlined">
-    <mat-card-header><mat-card-title>{{ 'monitor.kpi.revenue' | t }}</mat-card-title></mat-card-header>
+    <mat-card-header><mat-card-title>{{ 'monitor.kpi.revenue' | translate }}</mat-card-title></mat-card-header>
     <mat-card-content>
       <div style="font-size:24px; font-weight:600;">{{ report()?.revenue | number:'1.0-0' }} PLN</div>
       <div class="muted">Z raportu</div>
@@ -59,7 +60,7 @@
 
 <mat-card style="margin-bottom: 16px;">
   <mat-card-header>
-    <mat-card-title>{{ 'monitor.ab.title' | t }}</mat-card-title>
+    <mat-card-title>{{ 'monitor.ab.title' | translate }}</mat-card-title>
   </mat-card-header>
   <mat-card-content>
     <div class="variants">
@@ -69,12 +70,12 @@
             <mat-card-title>{{ v.channel | uppercase }} – wariant {{ v.variant }}</mat-card-title>
           </mat-card-header>
           <mat-card-content>
-            <div class="muted">CTR: — · Konwersje: —</div>
+            <div class="muted">CTR: {{ getVariantCtr(v.channel, v.variant) | percent:'1.1-2' }} · Konwersje: {{ getVariantConversions(v.channel, v.variant) }}</div>
           </mat-card-content>
           <mat-card-actions>
             <button mat-button color="primary" (click)="setWinner(v.channel, v.variant)">
               <mat-icon>emoji_events</mat-icon>
-              {{ 'monitor.setWinner' | t }}
+              {{ 'monitor.setWinner' | translate }}
             </button>
           </mat-card-actions>
         </mat-card>
@@ -85,9 +86,10 @@
 
 <mat-card>
   <mat-card-header>
-    <mat-card-title>{{ 'monitor.aiLog' | t }}</mat-card-title>
+    <mat-card-title>{{ 'monitor.aiLog' | translate }}</mat-card-title>
   </mat-card-header>
   <mat-card-content>
+    @if (loading()) { <mat-progress-bar mode="indeterminate"></mat-progress-bar> }
     <table mat-table [dataSource]="aiLogDemo">
       <ng-container matColumnDef="time">
         <th mat-header-cell *matHeaderCellDef>Czas</th>
@@ -106,7 +108,7 @@
       <tr mat-row *matRowDef="let row; columns: logColumns"></tr>
     </table>
     @if (!aiLogDemo.length) {
-      <div class="muted">{{ 'monitor.noEntries' | t }}</div>
+      <div class="muted">{{ 'monitor.noEntries' | translate }}</div>
     }
   </mat-card-content>
 </mat-card>
