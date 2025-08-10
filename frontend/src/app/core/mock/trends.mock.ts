@@ -1,4 +1,4 @@
-import { TrendMatch, TrendRecommendation } from '../models/models';
+import { TrendDetails, TrendMatch, TrendRecommendation } from '../models/models';
 
 export function mockTrendsRecommendations(params: { lat: number; lng: number; radius_km: number; limit?: number }): TrendRecommendation[] {
   const limit = params.limit ?? 6;
@@ -41,4 +41,31 @@ export function mockTrendMatches(trendId: string): TrendMatch[] {
       idx % 2 === 0 ? 'Sezonowość wspiera sprzedaż' : 'Wysoki popyt w regionie',
     ],
   }));
+}
+
+export function mockTrendDetails(trendId: string): TrendDetails {
+  const sources = ['google', 'tiktok', 'twitter'];
+  const days = 14;
+  const today = new Date();
+  const timeline: TrendDetails['sources_timeline'] = [];
+  for (let d = days - 1; d >= 0; d--) {
+    const date = new Date(today);
+    date.setDate(today.getDate() - d);
+    const dateStr = date.toISOString().substring(0, 10);
+    sources.forEach((s, idx) => {
+      const base = 20 + idx * 10;
+      const mentions = Math.max(0, Math.round(base + Math.sin((days - d) / 2 + idx) * 8 + Math.random() * 6));
+      timeline.push({ date: dateStr, mentions, source: s });
+    });
+  }
+  return {
+    id: trendId,
+    name: `Trend ${trendId}`,
+    explanations: [
+      'Wzrost zapytań w Google Trends',
+      'Wzmianki na TikTok rosną tydzień do tygodnia',
+      'Pozytywne sentymenty w social media',
+    ],
+    sources_timeline: timeline,
+  };
 }

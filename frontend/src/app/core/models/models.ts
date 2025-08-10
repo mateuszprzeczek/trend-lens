@@ -30,3 +30,9 @@ export interface CampaignReport {
     best_variant: { channel: string; variant: string } | null;
     insights: Array<string>;
 }
+
+export interface TrendDetails {
+    id: string; name: string;
+    explanations: string[];
+    sources_timeline: { date: string; mentions: number; source: string }[];
+}

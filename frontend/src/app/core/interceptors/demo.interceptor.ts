@@ -1,7 +1,7 @@
 import { HttpEvent, HttpInterceptorFn, HttpRequest, HttpResponse } from '@angular/common/http';
 import { Observable, of } from 'rxjs';
 import { delay } from 'rxjs/operators';
-import { mockTrendsRecommendations, mockTrendMatches } from '../mock/trends.mock';
+import { mockTrendsRecommendations, mockTrendMatches, mockTrendDetails } from '../mock/trends.mock';
 import { mockCampaignGenerate, mockCampaignGet, mockCampaignLaunch } from '../mock/campaigns.mock';
 import { mockCampaignReport } from '../mock/reports.mock';
 
@@ -38,6 +38,10 @@ export const demoInterceptor: HttpInterceptorFn = (req, next) => {
       const radius_km = parseFloat(qp.get('radius_km') || '200');
       const limit = parseInt(qp.get('limit') || '6', 10);
       body = mockTrendsRecommendations({ lat, lng, radius_km, limit });
+    } else if (method === 'GET' && /^\/trends\/[A-Za-z0-9%.-]+(\?|$)/.test(url)) {
+      const m = url.match(/^\/trends\/([^/?#]+)/);
+      const id = m?.[1] || '123';
+      body = mockTrendDetails(decodeURIComponent(id));
     } else if (method === 'GET' && /^\/trends\/.+\/matches(\?|$)/.test(url)) {
       const m = url.match(/^\/trends\/([^/?#]+)\/matches/);
       const id = m?.[1] || '123';

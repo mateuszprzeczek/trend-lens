@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
-import { TrendMatch, TrendRecommendation } from '../models/models';
+import { TrendDetails, TrendMatch, TrendRecommendation } from '../models/models';
 
 @Injectable({ providedIn: 'root' })
 export class TrendsApiService {
@@ -20,5 +20,9 @@ export class TrendsApiService {
 
   getMatches(trendId: string): Observable<TrendMatch[]> {
     return this.http.get<TrendMatch[]>(`/trends/${encodeURIComponent(trendId)}/matches`);
+  }
+
+  getDetails(trendId: string): Observable<TrendDetails> {
+    return this.http.get<TrendDetails>(`/trends/${encodeURIComponent(trendId)}`);
   }
 }
