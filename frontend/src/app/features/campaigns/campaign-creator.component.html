@@ -1,0 +1,130 @@
+<h1 style="margin:0 0 12px 0">{{ 'creator.title' | translate }}</h1>
+<p class="muted">Trend: <strong>{{ trendId() || '—' }}</strong> · Produkty: <strong>{{ products().join(', ') || '—' }}</strong></p>
+
+<mat-card>
+  <mat-card-header><mat-card-title>{{ 'creator.step1' | translate }}</mat-card-title></mat-card-header>
+  <mat-card-content>
+    <div class="row">
+      <mat-checkbox [(ngModel)]="channels.push">{{ 'creator.push' | translate }}</mat-checkbox>
+      <mat-checkbox [(ngModel)]="channels.email">{{ 'creator.email' | translate }}</mat-checkbox>
+      <mat-checkbox disabled class="disabled-info">{{ 'creator.metaSoon' | translate }}</mat-checkbox>
+      <mat-checkbox disabled class="disabled-info">{{ 'creator.gadsSoon' | translate }}</mat-checkbox>
+    </div>
+    @if (!channels.push && !channels.email) {
+      <p class="muted">{{ 'creator.pickOne' | translate }}</p>
+    }
+  </mat-card-content>
+</mat-card>
+
+<mat-card>
+  <mat-card-header><mat-card-title>{{ 'creator.step2' | translate }}</mat-card-title></mat-card-header>
+  <mat-card-content>
+    <div class="grid-2">
+      <mat-form-field appearance="outline">
+        <mat-label>{{ 'creator.tone' | translate }}</mat-label>
+        <input matInput [(ngModel)]="brand.tone" placeholder="np. Energetyczny, profesjonalny" />
+      </mat-form-field>
+      <mat-form-field appearance="outline">
+        <mat-label>{{ 'creator.primaryColor' | translate }}</mat-label>
+        <input matInput [(ngModel)]="brand.primary" placeholder="#90caf9" />
+      </mat-form-field>
+      <mat-form-field appearance="outline">
+        <mat-label>{{ 'creator.secondaryColor' | translate }}</mat-label>
+        <input matInput [(ngModel)]="brand.secondary" placeholder="#ffcc80" />
+      </mat-form-field>
+      <mat-form-field appearance="outline">
+        <mat-label>{{ 'creator.logoUrl' | translate }}</mat-label>
+        <input matInput [(ngModel)]="brand.logo_url" placeholder="https://..." />
+      </mat-form-field>
+    </div>
+    <div class="row" style="align-items:center; gap:12px; margin-top:8px;">
+      <span class="muted">{{ 'creator.preview' | translate }}</span>
+      <span [style.background]="brand.primary" style="display:inline-block;width:24px;height:24px;border-radius:4px;"></span>
+      <span [style.background]="brand.secondary" style="display:inline-block;width:24px;height:24px;border-radius:4px;"></span>
+      <span class="muted">Ton: {{ brand.tone || '—' }}</span>
+    </div>
+  </mat-card-content>
+</mat-card>
+
+<mat-card>
+  <mat-card-header><mat-card-title>{{ 'creator.step3' | translate }}</mat-card-title></mat-card-header>
+  <mat-card-content>
+    @if (generating()) { <mat-progress-bar mode="indeterminate"></mat-progress-bar> }
+    <mat-tab-group>
+      <mat-tab label="Push">
+        <div class="grid-2" style="margin-top:12px;">
+          <mat-form-field appearance="outline">
+            <mat-label>{{ 'creator.push.title' | translate }}</mat-label>
+            <input matInput [(ngModel)]="assets.push.title" />
+          </mat-form-field>
+          <mat-form-field appearance="outline">
+            <mat-label>{{ 'creator.push.cta' | translate }}</mat-label>
+            <input matInput [(ngModel)]="assets.push.cta_url" />
+          </mat-form-field>
+          <mat-form-field appearance="outline" class="full">
+            <mat-label>{{ 'creator.push.body' | translate }}</mat-label>
+            <textarea matInput [(ngModel)]="assets.push.body"></textarea>
+          </mat-form-field>
+          <mat-form-field appearance="outline">
+            <mat-label>{{ 'creator.push.icon' | translate }}</mat-label>
+            <input matInput [(ngModel)]="assets.push.icon_url" />
+          </mat-form-field>
+        </div>
+      </mat-tab>
+      <mat-tab label="Email">
+        <div class="grid-2" style="margin-top:12px;">
+          <mat-form-field appearance="outline">
+            <mat-label>{{ 'creator.email.subject' | translate }}</mat-label>
+            <input matInput [(ngModel)]="assets.email.subject" />
+          </mat-form-field>
+          <mat-form-field appearance="outline">
+            <mat-label>{{ 'creator.email.alt' | translate }}</mat-label>
+            <input matInput [(ngModel)]="assets.email.alt_text" />
+          </mat-form-field>
+          <mat-form-field appearance="outline" class="full">
+            <mat-label>{{ 'creator.email.html' | translate }}</mat-label>
+            <textarea matInput [(ngModel)]="assets.email.html"></textarea>
+          </mat-form-field>
+        </div>
+      </mat-tab>
+    </mat-tab-group>
+  </mat-card-content>
+  <mat-card-actions class="actions">
+    <button mat-stroked-button color="primary" (click)="onGenerate()" [disabled]="generating() || !canGenerate()">
+      <mat-icon>auto_fix_high</mat-icon>
+      {{ 'creator.generate' | translate }}
+    </button>
+  </mat-card-actions>
+</mat-card>
+
+<mat-card>
+  <mat-card-header><mat-card-title>{{ 'creator.step4' | translate }}</mat-card-title></mat-card-header>
+  <mat-card-content>
+    <div class="grid-2">
+      <mat-form-field appearance="outline">
+        <mat-label>{{ 'creator.start' | translate }}</mat-label>
+        <input matInput type="datetime-local" [(ngModel)]="schedule" />
+      </mat-form-field>
+    </div>
+    <div class="budget-grid" style="margin-top:12px;">
+      @if (channels.push) {
+        <mat-form-field appearance="outline">
+          <mat-label>{{ 'creator.budget.push' | translate }}</mat-label>
+          <input matInput type="number" min="0" [(ngModel)]="budgets.push" />
+        </mat-form-field>
+      }
+      @if (channels.email) {
+        <mat-form-field appearance="outline">
+          <mat-label>{{ 'creator.budget.email' | translate }}</mat-label>
+          <input matInput type="number" min="0" [(ngModel)]="budgets.email" />
+        </mat-form-field>
+      }
+    </div>
+  </mat-card-content>
+  <mat-card-actions class="actions">
+    <button mat-flat-button color="accent" (click)="onLaunch()" [disabled]="launching() || !campaignId()">
+      <mat-icon>rocket_launch</mat-icon>
+      {{ 'creator.launch' | translate }}
+    </button>
+  </mat-card-actions>
+</mat-card>

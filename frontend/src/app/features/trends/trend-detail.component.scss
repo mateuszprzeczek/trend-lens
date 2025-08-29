@@ -1,0 +1,7 @@
+:host { display:block; }
+.section { margin-bottom: 16px; }
+.header { display:flex; align-items:center; justify-content:space-between; gap: 12px; }
+.muted { opacity: .8; font-size: 13px; }
+table { width: 100%; }
+.chips { display:flex; gap:8px; flex-wrap:wrap; }
+canvas { max-height: 240px; }

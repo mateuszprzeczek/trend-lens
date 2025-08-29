@@ -1,0 +1,115 @@
+<div class="section">
+  <div class="header">
+    <h1 style="margin:0">Trend #{{ id }}</h1>
+    <div>
+      <button mat-stroked-button color="primary" [disabled]="selected().length === 0" (click)="goToCreator()">
+        <mat-icon>auto_fix_high</mat-icon>
+        {{ 'trend.generate' | translate }} ({{ selected().length }})
+      </button>
+    </div>
+  </div>
+</div>
+
+<mat-card class="section">
+  <mat-card-header>
+    <mat-card-title>{{ 'trend.whyRecommend' | translate }}</mat-card-title>
+  </mat-card-header>
+  <mat-card-content>
+    @if (explanations().length) {
+      <mat-list>
+        @for (e of explanations(); track e) {
+          <mat-list-item>{{ e }}</mat-list-item>
+        }
+      </mat-list>
+    } @else {
+      <p class="muted">{{ 'trend.noExplanations' | translate }}</p>
+    }
+  </mat-card-content>
+</mat-card>
+
+<mat-card class="section">
+  <mat-card-header>
+    <mat-card-title>{{ 'trend.sourcesMomentum' | translate }}</mat-card-title>
+  </mat-card-header>
+  <mat-card-content>
+    @if (loadingDetails()) {
+      <div style="display:flex; justify-content:center; padding:16px;">
+        <mat-progress-spinner diameter="32" mode="indeterminate"></mat-progress-spinner>
+      </div>
+    } @else {
+      <canvas #momentumChart></canvas>
+    }
+  </mat-card-content>
+</mat-card>
+
+<mat-card class="section">
+  <mat-card-header>
+    <mat-card-title>{{ 'trend.matches' | translate }}</mat-card-title>
+  </mat-card-header>
+  <mat-card-content>
+    @if (selected().length) {
+      <div class="chips">
+        <mat-chip-set>
+          @for (pid of selected(); track pid) {
+            <mat-chip (removed)="toggle(pid)">
+              {{ pid }}
+              <button matChipRemove aria-label="Usuń">
+                <mat-icon>cancel</mat-icon>
+              </button>
+            </mat-chip>
+          }
+        </mat-chip-set>
+      </div>
+    }
+
+    @if (loadingMatches()) {
+      <mat-progress-bar mode="indeterminate"></mat-progress-bar>
+    } @else {
+      @if (matches(); as data) {
+        <table mat-table [dataSource]="data">
+          <ng-container matColumnDef="product">
+            <th mat-header-cell *matHeaderCellDef> {{ 'trend.product' | translate }} </th>
+            <td mat-cell *matCellDef="let m"> {{ m.product_id }} </td>
+          </ng-container>
+
+          <ng-container matColumnDef="match">
+            <th mat-header-cell *matHeaderCellDef> {{ 'trend.matchScore' | translate }} </th>
+            <td mat-cell *matCellDef="let m"> {{ m.match_score | number:'1.2-2' }} </td>
+          </ng-container>
+
+          <ng-container matColumnDef="profit">
+            <th mat-header-cell *matHeaderCellDef> {{ 'trend.profitScore' | translate }} </th>
+            <td mat-cell *matCellDef="let m"> {{ m.profit_score | number:'1.2-2' }} </td>
+          </ng-container>
+
+          <ng-container matColumnDef="reasons">
+            <th mat-header-cell *matHeaderCellDef> {{ 'trend.reasons' | translate }} </th>
+            <td mat-cell *matCellDef="let m"> {{ (m.reasons || []).join('; ') }} </td>
+          </ng-container>
+
+          <ng-container matColumnDef="actions">
+            <th mat-header-cell *matHeaderCellDef> Akcje </th>
+            <td mat-cell *matCellDef="let m">
+              @if (!isSelected(m.product_id)) {
+                <button mat-button color="primary" (click)="toggle(m.product_id)">
+                  <mat-icon>add_shopping_cart</mat-icon>
+                  {{ 'trend.actions.add' | translate }}
+                </button>
+              } @else {
+                <button mat-button color="warn" (click)="toggle(m.product_id)">
+                  <mat-icon>remove_shopping_cart</mat-icon>
+                  {{ 'trend.actions.remove' | translate }}
+                </button>
+              }
+            </td>
+          </ng-container>
+
+          <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+          <tr mat-row *matRowDef="let row; columns: displayedColumns;"></tr>
+        </table>
+      } @else {
+        <p class="muted">{{ 'home.loading' | translate }}</p>
+      }
+    }
+  </mat-card-content>
+</mat-card>

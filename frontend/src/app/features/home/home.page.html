@@ -1,0 +1,72 @@
+<div class="header">
+  <h1 style="margin:0">{{ 'home.title' | translate }}</h1>
+  <div class="filters">
+    <div class="slider-wrap">
+      <label class="muted">{{ 'home.radius' | translate }}: {{ radius() }} km</label>
+      <mat-slider [min]="10" [max]="500" [step]="10" [discrete]="true" [showTickMarks]="true">
+        <input matSliderThumb [ngModel]="radius()" (ngModelChange)="radius.set($event)" aria-label="Radius" />
+      </mat-slider>
+    </div>
+    <div class="select-wrap">
+      <mat-form-field appearance="outline" style="width: 100%; min-width: 140px;">
+        <mat-label>{{ 'home.limit' | translate }}</mat-label>
+        <mat-select [value]="limit()" (valueChange)="limit.set($event)">
+          <mat-option [value]="6">6</mat-option>
+          <mat-option [value]="12">12</mat-option>
+          <mat-option [value]="18">18</mat-option>
+          <mat-option [value]="24">24</mat-option>
+        </mat-select>
+      </mat-form-field>
+    </div>
+    <button mat-flat-button color="primary" (click)="refresh()" [disabled]="loading()">
+      <mat-icon>refresh</mat-icon>
+      {{ 'home.refresh' | translate }}
+    </button>
+  </div>
+</div>
+
+@if (trends(); as list) {
+  <div class="grid">
+    @for (t of list; track t.id) {
+      <mat-card (click)="openTrend(t)" style="cursor:pointer;">
+        <mat-card-header>
+          <div class="card-header">
+            <mat-card-title>{{ t.name }}</mat-card-title>
+            <span class="muted">#{{ t.id }}</span>
+          </div>
+        </mat-card-header>
+        <mat-card-content>
+          <div class="metrics">
+            <div class="metric">
+              <span class="label">{{ 'trend.score' | translate }}</span>
+              <span class="value">{{ t.score | number:'1.2-2' }}</span>
+            </div>
+            <div class="metric">
+              <span class="label">{{ 'trend.growth7d' | translate }}</span>
+              <span class="value">{{ t.growth_7d | percent:'1.0-0' }}</span>
+            </div>
+            @if (t.forecast_peak_in_days != null) {
+              <div class="metric">
+                <span class="label">{{ 'trend.peakIn' | translate }}</span>
+                <span class="value">{{ t.forecast_peak_in_days }} d</span>
+              </div>
+            }
+          </div>
+          @if (t.sources) {
+            <div class="sources">
+              @for (entry of sourceEntries(t); track entry.key) {
+                <div class="bar" [title]="entry.key + ': ' + entry.value" [style.height.%]="entry.height" [style.background]="entry.color"></div>
+              }
+            </div>
+          }
+        </mat-card-content>
+      </mat-card>
+    }
+  </div>
+} @else {
+  @if (!loading()) {
+    <p class="muted">{{ 'home.noData' | translate }}</p>
+  } @else {
+    <p class="muted">{{ 'home.loading' | translate }}</p>
+  }
+}

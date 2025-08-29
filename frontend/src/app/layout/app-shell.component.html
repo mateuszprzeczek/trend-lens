@@ -1,0 +1,54 @@
+<mat-sidenav-container class="container">
+  <mat-sidenav #drawer [mode]="sidenavMode()" [opened]="sidenavOpened()">
+    <mat-nav-list>
+      <a mat-list-item class="menu-link" routerLink="/" routerLinkActive="active" (click)="onNavItemClick(drawer)">
+        <mat-icon matListItemIcon>dashboard</mat-icon>
+        <span matListItemTitle>{{ 'nav.dashboard' | translate }}</span>
+      </a>
+      <a mat-list-item class="menu-link" [routerLink]="['/campaigns', 1]" routerLinkActive="active" (click)="onNavItemClick(drawer)">
+        <mat-icon matListItemIcon>campaign</mat-icon>
+        <span matListItemTitle>{{ 'nav.campaigns' | translate }}</span>
+      </a>
+      <a mat-list-item class="menu-link" [routerLink]="['/reports/campaign', 1]" routerLinkActive="active" (click)="onNavItemClick(drawer)">
+        <mat-icon matListItemIcon>insights</mat-icon>
+        <span matListItemTitle>{{ 'nav.reports' | translate }}</span>
+      </a>
+    </mat-nav-list>
+  </mat-sidenav>
+
+  <mat-sidenav-content>
+    <mat-toolbar color="primary">
+      <div class="toolbar-content">
+        @if (ui.isLoadingGlobal()) {
+          <mat-progress-bar mode="indeterminate" color="primary" style="position:absolute; left:0; right:0; top:0;"></mat-progress-bar>
+        }
+        @if (isHandset()) {
+          <button mat-icon-button aria-label="Menu" (click)="drawer.toggle()">
+            <mat-icon>menu</mat-icon>
+          </button>
+        }
+        <span class="brand"><mat-icon>trending_up</mat-icon>&nbsp;{{ 'app.brand' | translate }}</span>
+        <span class="spacer"></span>
+        <mat-form-field class="search-field" appearance="outline">
+          <mat-label>{{ 'nav.search' | translate }}</mat-label>
+          <input matInput [placeholder]="('nav.search.placeholder' | translate)" />
+          <button mat-icon-button matSuffix aria-label="search">
+            <mat-icon>search</mat-icon>
+          </button>
+        </mat-form-field>
+        <button mat-icon-button [attr.aria-label]="'nav.notifications' | translate">
+          <mat-icon>notifications</mat-icon>
+        </button>
+        <button mat-stroked-button (click)="setLang('pl')">{{ 'lang.pl' | translate }}</button>
+        <button mat-stroked-button (click)="setLang('en')">{{ 'lang.en' | translate }}</button>
+        <span class="avatar" aria-label="Avatar">
+          <mat-icon>account_circle</mat-icon>
+        </span>
+      </div>
+    </mat-toolbar>
+
+    <div class="content">
+      <router-outlet></router-outlet>
+    </div>
+  </mat-sidenav-content>
+</mat-sidenav-container>
