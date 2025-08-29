@@ -299,7 +299,7 @@ async function main() {
     },
   });
 
-  console.log('Seed completed:', {
+  console.info('Seed completed:', {
     company: company.name,
     products: productsAll.length,
     trends: trendList.length,

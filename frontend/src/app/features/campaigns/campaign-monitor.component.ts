@@ -1,4 +1,4 @@
-import { Component, Input, OnDestroy, effect, inject, signal } from '@angular/core';
+import { Component, OnDestroy, effect, inject, signal, input } from '@angular/core';
 import { CommonModule, DecimalPipe, PercentPipe, KeyValuePipe, DatePipe } from '@angular/common';
 import { MatCardModule } from '@angular/material/card';
 import { MatButtonModule } from '@angular/material/button';
@@ -32,7 +32,7 @@ import { TranslateModule } from '@ngx-translate/core';
   templateUrl: './campaign-monitor.component.html',
 })
 export class CampaignMonitorComponent implements OnDestroy {
-  @Input() id!: string;
+  id = input.required<string>();
 
   private snack = inject(MatSnackBar);
   private campaignsApi = inject(CampaignsApiService);
@@ -50,7 +50,7 @@ export class CampaignMonitorComponent implements OnDestroy {
   ];
 
   private autoRefreshEffect = effect((onCleanup) => {
-    const cid = this.id;
+    const cid = this.id();
     if (!cid) return;
     this.refresh();
     const handle = setInterval(() => this.refresh(), 15000);
@@ -61,7 +61,7 @@ export class CampaignMonitorComponent implements OnDestroy {
   }
 
   refresh() {
-    if (!this.id) return;
+    if (!this.id()) return;
     this.loading.set(true);
 
     this.campaignsApi.get(this.id).subscribe({

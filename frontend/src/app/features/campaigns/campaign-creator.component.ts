@@ -1,4 +1,5 @@
 import { Component, effect, inject, signal } from '@angular/core';
+import { toSignal } from '@angular/core/rxjs-interop';
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute, Router } from '@angular/router';
 import { MatCardModule } from '@angular/material/card';
@@ -65,7 +66,9 @@ export class CampaignCreatorComponent {
   launching = signal(false);
 
   constructor() {
-    this.route.queryParamMap.subscribe((qp) => {
+    const qpSig = toSignal(this.route.queryParamMap, { initialValue: this.route.snapshot.queryParamMap });
+    effect(() => {
+      const qp = qpSig();
       const tid = qp.get('trend_id');
       let prods = qp.getAll('products');
       if (prods.length === 0) {

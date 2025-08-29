@@ -1,6 +1,5 @@
-import type { INestApplication } from '@nestjs/common';
+import { INestApplication, Logger } from '@nestjs/common';
 
-// Safe Swagger setup that doesn't fail build if @nestjs/swagger isn't installed.
 export async function setupSwagger(app: INestApplication) {
   try {
     // Dynamically import to avoid hard dependency during compile in some environments
@@ -17,10 +16,8 @@ export async function setupSwagger(app: INestApplication) {
 
     const document = SwaggerModule.createDocument(app, config);
     SwaggerModule.setup('/docs', app, document);
-    // eslint-disable-next-line no-console
-    console.log('[Swagger] UI available at /docs');
+    Logger.log('[Swagger] UI available at /docs');
   } catch (e) {
-    // eslint-disable-next-line no-console
-    console.log('[Swagger] @nestjs/swagger not installed; docs disabled');
+    Logger.warn('[Swagger] @nestjs/swagger not installed; docs disabled');
   }
 }

@@ -1,4 +1,4 @@
-import { Component, inject, effect } from '@angular/core';
+import { Component, inject, effect, computed } from '@angular/core';
 import { RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
 import { MatToolbarModule } from '@angular/material/toolbar';
 import { MatButtonModule } from '@angular/material/button';
@@ -9,7 +9,8 @@ import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { BreakpointObserver, LayoutModule } from '@angular/cdk/layout';
-import { map, shareReplay } from 'rxjs/operators';
+import { map } from 'rxjs/operators';
+import { toSignal } from '@angular/core/rxjs-interop';
 import { UIStateService } from '../core/state/ui.state';
 import { CompanyStateService } from '../core/state/company.state';
 import { TranslateModule } from '@ngx-translate/core';
@@ -39,24 +40,17 @@ import { TranslationService } from '../core/services/translation.service';
 export class AppShellComponent {
   private i18n = inject(TranslationService);
   private breakpoint = inject(BreakpointObserver);
-  readonly isHandset$ = this.breakpoint.observe('(max-width: 768px)').pipe(
-    map(result => result.matches),
-    shareReplay({ bufferSize: 1, refCount: false })
+  readonly isHandset = toSignal(
+    this.breakpoint.observe('(max-width: 768px)').pipe(map(result => result.matches)),
+    { initialValue: false }
   );
-  isHandset = false;
-  sidenavMode: 'over' | 'side' = 'side';
-  sidenavOpened = true;
+  readonly sidenavMode = computed<'over' | 'side'>(() => (this.isHandset() ? 'over' : 'side'));
+  readonly sidenavOpened = computed<boolean>(() => !this.isHandset());
 
   ui = inject(UIStateService);
   companyState = inject(CompanyStateService);
 
   constructor() {
-    this.isHandset$.subscribe(v => {
-      this.isHandset = v;
-      this.sidenavMode = v ? 'over' : 'side';
-      this.sidenavOpened = !v;
-    });
-
     effect(() => {
       const primary = this.companyState.company().brand_kit?.primary || '#90caf9';
       document.documentElement.style.setProperty('--brand-primary', primary);
@@ -64,7 +58,7 @@ export class AppShellComponent {
   }
 
   onNavItemClick(drawer: MatSidenav) {
-    if (this.isHandset) {
+    if (this.isHandset()) {
       drawer.close();
     }
   }
